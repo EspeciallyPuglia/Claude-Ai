@@ -33,7 +33,8 @@ tu parli, Claude legge Omi e Plaud, apre i reparti e agisce chiedendo conferma.
 
 ## Simulatore del briefing
 
-`simulator/briefing-simulator.html`: prova del Direttore vocale, tutto in
-inglese (le bozze in italiano le legge una voce italiana). Per parlargli,
-scarica il file e aprilo con Chrome o Edge sul computer, poi premi
-"Hands-free" e consenti il microfono. Dentro Claude il microfono è bloccato.
+`simulator/briefing-simulator.html`: un punto alla volta, tu rispondi a voce,
+"next" chiude il punto e riordina i task; alla fine un riepilogo da copiare in
+Claude per applicarlo in Asana e Calendar. Per registrare la voce, scarica il
+file e aprilo con Chrome o Edge sul computer, poi premi "Start recording" e
+consenti il microfono. Dentro Claude il microfono è bloccato.

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
-/* Layout: a phone-like "call" column (voice orb, departments, transcript, reply bar) beside a backstage log of what the assistant would do. */
+/* Layout: one item card at a time with the live transcript under it (left), the task queue re-ordering itself as you go (right). */
 :root {
   --bg: #0E1719;
   --surface: #16232A;
@@ -21,737 +21,398 @@
   --accent: #6CC3B5;
   --accent-ink: #0B2421;
   --warn: #E7A75A;
-  --danger: #E98A7C;
-  --paper: #F3EEE2;
-  --paper-ink: #22302F;
+  --rec: #E98A7C;
+  --rec-ink: #2A0F0B;
   --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
   --font-body: "Atkinson Hyperlegible", Verdana, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; }
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 20px 32px;
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px;
 }
-.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 5vw, 40px); line-height: 1.05; margin: 0; text-wrap: balance; }
-.sub { color: var(--muted); margin: 6px 0 0; max-width: 60ch; }
-.toggles { display: flex; flex-wrap: wrap; gap: 8px; }
-.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
-.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 24px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 5vw, 40px); line-height: 1.05; margin: 0; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.progress { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+.banner { background: var(--surface-2); border: 1px solid var(--warn); border-radius: 14px; padding: 10px 14px; font-size: 14px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr) 360px; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.dept { align-self: flex-start; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+.card h2 { font-family: var(--font-display); font-size: clamp(22px, 3.4vw, 30px); line-height: 1.15; margin: 0; text-wrap: balance; }
+.card ul { margin: 0; padding-left: 20px; color: var(--muted); }
+.card ul li { margin: 2px 0; }
+.ask { font-size: 18px; font-weight: 700; margin: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 13px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); font-variant-numeric: tabular-nums; }
+.tag.over { border-color: var(--warn); color: var(--warn); }
+.tag.high { border-color: var(--rec); color: var(--rec); }
+
+.rec-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.recbtn { font: inherit; font-weight: 700; font-size: 16px; border: 2px solid var(--rec); background: transparent; color: var(--fg); padding: 10px 18px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.recbtn .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--rec); }
+.recbtn[aria-pressed="true"] { background: var(--rec); color: var(--rec-ink); }
+.recbtn[aria-pressed="true"] .dot { background: var(--rec-ink); animation: blink 1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .recbtn[aria-pressed="true"] .dot { animation: none; } }
+.btn { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); padding: 9px 14px; border-radius: 12px; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn:disabled { opacity: .45; cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.recstate { color: var(--muted); font-size: 14px; }
 
-.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-@media (min-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr) 340px; } }
-
-.call { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.stage { display: flex; align-items: center; gap: 18px; }
-.orb { width: 72px; height: 72px; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #9FE3D8, var(--accent) 55%, #2C6E66); position: relative; }
-.orb::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; }
-.orb.speaking::after { animation: ring 1.4s ease-out infinite; }
-.orb.italian { background: radial-gradient(circle at 35% 35%, #F6D3A8, var(--warn) 55%, #8A5A22); }
-.orb.italian::after { border-color: var(--warn); }
-.orb.thinking { filter: saturate(.4) brightness(.8); }
-.orb.listening { background: radial-gradient(circle at 35% 35%, #FFD0C8, var(--danger) 55%, #8E3B30); }
-.orb.listening::after { border-color: var(--danger); animation: ring 1.8s ease-out infinite; }
-.microw { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.mic { font: inherit; font-weight: 700; font-size: 15px; border: 1px solid var(--danger); background: transparent; color: var(--fg); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
-.mic[aria-pressed="true"] { background: var(--danger); color: #2A0F0B; }
-.mic-status { color: var(--muted); font-size: 13px; flex: 1; min-width: 200px; }
-@keyframes ring { from { opacity: .7; transform: scale(.9); } to { opacity: 0; transform: scale(1.35); } }
-@media (prefers-reduced-motion: reduce) { .orb.speaking::after { animation: none; opacity: .6; } }
-.status { min-width: 0; }
-.status .who { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
-.status .state { color: var(--muted); font-size: 14px; }
-
-.depts { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
-.depts li { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-.depts li.done { color: var(--fg); border-color: var(--surface-2); background: var(--surface-2); }
-.depts li.done::before { content: "✓ "; color: var(--accent); }
-.depts li.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
-
-.transcript { display: flex; flex-direction: column; gap: 10px; max-height: 46vh; min-height: 220px; overflow-y: auto; padding-right: 4px; }
-.msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; overflow-wrap: anywhere; }
-.msg.claude { background: var(--surface-2); align-self: flex-start; border-bottom-left-radius: 4px; }
-.msg.you { background: var(--accent); color: var(--accent-ink); align-self: flex-end; border-bottom-right-radius: 4px; }
-.msg.draft { background: var(--paper); color: var(--paper-ink); align-self: flex-start; border-radius: 6px; font-family: Georgia, "Times New Roman", serif; white-space: pre-line; }
-.msg.sys { align-self: center; color: var(--muted); font-size: 13px; font-style: italic; text-align: center; max-width: 100%; }
-.msg .lbl { display: block; font-family: var(--font-body); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-bottom: 2px; }
-
-.reply { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { font: inherit; font-size: 15px; border: 1px solid var(--accent); background: transparent; color: var(--fg); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
-.chip:hover { background: var(--surface-2); }
-.chip.util { border-color: var(--line); color: var(--muted); font-size: 14px; }
-.chip.start { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 17px; padding: 12px 22px; }
-.say { display: flex; gap: 8px; }
-.say input { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
-.say button { font: inherit; font-weight: 700; border: 0; border-radius: 12px; padding: 10px 16px; background: var(--fg); color: var(--bg); cursor: pointer; }
-.say button:disabled, .chip:disabled { opacity: .45; cursor: default; }
+.transcript { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-height: 96px; max-height: 30vh; overflow-y: auto; overflow-wrap: anywhere; }
+.transcript .final { color: var(--fg); }
+.transcript .interim { color: var(--muted); font-style: italic; }
+.transcript .empty { color: var(--muted); font-size: 14px; }
+.heard { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; }
+.heard .tag { border-color: var(--accent); color: var(--accent); }
+.typerow { display: flex; gap: 8px; }
+.typerow input { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
 
-aside.backstage { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-aside h2 { font-family: var(--font-display); font-size: 20px; margin: 0; }
-aside .note { color: var(--muted); font-size: 13px; margin: 0; }
-.voices { font-size: 13px; color: var(--muted); margin: 0; }
-.voicepick { display: flex; flex-direction: column; gap: 6px; }
-.voicepick label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.vrow { display: flex; gap: 6px; }
-.vrow select { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
-.prev { font: inherit; font-size: 13px; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
-.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.log li { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; font-size: 14px; }
-.log li .k { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.log li.create { border-color: var(--accent); }
-.log li.external { border-color: var(--warn); }
-.log li.manual { border-color: var(--danger); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
-.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
-.empty { color: var(--muted); font-size: 14px; }
+.qhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.qhead h2 { font-family: var(--font-display); font-size: 20px; margin: 0; }
+.queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.queue li { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; transition: background .4s; }
+.queue li.current { border-color: var(--accent); background: var(--surface-2); }
+.queue li.changed { background: #22383A; }
+.queue li.discussed .qt::after { content: " ✓"; color: var(--accent); }
+.queue .qt { font-size: 14px; }
+.queue .qm { display: flex; flex-wrap: wrap; gap: 4px; }
+.queue .qm .tag { font-size: 12px; padding: 1px 8px; }
+.queue .chg { font-size: 12px; color: var(--accent); }
+.closed h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.closed ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+
+.summary textarea { width: 100%; min-height: 220px; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; resize: vertical; }
 </style>
 
 <div class="wrap">
   <header>
     <div>
       <h1>Briefing Simulator</h1>
-      <p class="sub">Try your voice assistant before it’s built. It speaks to you in English; drafts in Italian are read by an Italian voice. Nothing is actually created or sent.</p>
+      <p class="sub">One item at a time. Read the card, answer out loud, say “next”. Your answer is recorded live and the task list re-orders itself. Nothing is changed in Asana until you copy the summary to Claude.</p>
     </div>
-    <div class="toggles">
-      <div class="seg" role="group" aria-label="Mode">
-        <button id="mode-script" aria-pressed="true">Script</button>
-        <button id="mode-live" aria-pressed="false">Live Claude</button>
-      </div>
-      <div class="seg" role="group" aria-label="Voice">
-        <button id="voice-on" aria-pressed="true">Voice on</button>
-        <button id="voice-off" aria-pressed="false">Voice off</button>
-      </div>
-    </div>
+    <div class="progress" id="progress"></div>
   </header>
+  <div class="banner" id="micbanner" hidden></div>
 
   <div class="grid">
-    <section class="call" aria-label="Voice session">
-      <div class="stage">
-        <div class="orb" id="orb" aria-hidden="true"></div>
-        <div class="status">
-          <div class="who">Your assistant</div>
-          <div class="state" id="state">Ready. Press “Start the briefing”.</div>
-        </div>
+    <section class="panel card" id="card" aria-live="polite">
+      <span class="dept" id="c-dept"></span>
+      <h2 id="c-title"></h2>
+      <ul id="c-bullets"></ul>
+      <div class="meta" id="c-meta"></div>
+      <p class="ask" id="c-ask"></p>
+
+      <div class="rec-row">
+        <button type="button" class="recbtn" id="rec" aria-pressed="false"><span class="dot"></span><span id="rec-label">Start recording</span></button>
+        <button type="button" class="btn primary" id="next">Next</button>
+        <button type="button" class="btn" id="skip">Skip for now</button>
+        <button type="button" class="btn" id="back">Back</button>
+        <span class="recstate" id="recstate"></span>
       </div>
-      <ul class="depts" id="depts" aria-label="Departments"></ul>
-      <div class="transcript" id="transcript" aria-live="polite"></div>
-      <div class="reply">
-        <div class="microw">
-          <button type="button" class="mic" id="mic-btn" aria-pressed="false">Hands-free: off</button>
-          <span class="mic-status" id="mic-status">Turn on hands-free and it listens after every answer. Say “pause” to hold, “carry on” to resume.</span>
-        </div>
-        <div class="chips" id="chips"></div>
-        <form class="say" id="say-form">
-          <input id="say-input" type="text" autocomplete="off" placeholder="Type it as you’d say it, e.g. “skip”" aria-label="Your reply">
-          <button id="say-send" type="submit">Send</button>
-        </form>
-        <p class="hint" id="hint">Always available: repeat, where are we?, pause. Inside Claude the microphone is blocked: save this file and open it in Chrome or Edge on your computer to talk to it.</p>
-      </div>
+      <div class="transcript" id="transcript"><span class="empty">Your answer appears here as you speak.</span></div>
+      <div class="heard" id="heard" aria-label="What I picked up"></div>
+      <form class="typerow" id="typeform">
+        <input id="typein" type="text" autocomplete="off" placeholder="Or type / dictate here, then press Enter" aria-label="Your answer">
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <p class="hint">Say “next” to close the item, “skip” to come back to it later, “go back” for the previous one, “pause” to stop recording. Dates like “Friday”, “tomorrow”, “end of the month”; “urgent” or “can wait”; “already done”; “waiting on …” are picked up automatically.</p>
     </section>
 
-    <aside class="backstage" aria-label="Behind the scenes">
-      <h2>Behind the scenes</h2>
-      <p class="note">What the assistant would do with your connectors. Data read on 23 October from Calendar, Asana and Omi.</p>
-      <div class="voicepick">
-        <label for="en-voice">Assistant voice</label>
-        <div class="vrow"><select id="en-voice"></select><button type="button" class="prev" id="en-prev">Preview</button></div>
-        <label for="it-voice">Italian drafts voice</label>
-        <div class="vrow"><select id="it-voice"></select><button type="button" class="prev" id="it-prev">Preview</button></div>
-        <p class="voices" id="voices">Voices marked “Natural” sound the most human. Microsoft Edge has the best free ones.</p>
-      </div>
-      <div class="legend">
-        <span style="--c: var(--line)">reads</span>
-        <span style="--c: var(--accent)">creates for you</span>
-        <span style="--c: var(--warn)">goes outside</span>
-        <span style="--c: var(--danger)">you do it by hand</span>
-      </div>
-      <ul class="log" id="log"><li class="empty">Nothing yet. Start the briefing.</li></ul>
+    <aside class="panel" aria-label="Your tasks">
+      <div class="qhead"><h2>Your tasks</h2><span class="progress" id="qcount"></span></div>
+      <ol class="queue" id="queue"></ol>
+      <div class="closed" id="closed" hidden><h3>Closed today</h3><ul id="closedlist"></ul></div>
     </aside>
   </div>
+
+  <section class="panel summary" id="summary" hidden>
+    <h2 style="font-family: var(--font-display); margin: 0;">Briefing done</h2>
+    <p class="hint" style="font-size: 15px;">Here’s what changed. Copy it and paste it into Claude (with Asana and Calendar connected) to apply it for real.</p>
+    <textarea id="sumtext" readonly aria-label="Summary"></textarea>
+    <div class="rec-row"><button type="button" class="btn primary" id="copy">Copy summary</button><button type="button" class="btn" id="restart">Start again</button><span class="recstate" id="copystate"></span></div>
+  </section>
 </div>
 
 <script>
 (() => {
-  const DEPTS = ["Opening", "Agenda", "Hospitality", "Finance", "Shop", "Wrap-up"];
   const $ = (id) => document.getElementById(id);
-  const transcriptEl = $("transcript"), chipsEl = $("chips"), logEl = $("log"), stateEl = $("state"), orb = $("orb");
-  const input = $("say-input"), sendBtn = $("say-send");
-
-  let mode = "script";
-  let voiceOn = true;
-  let current = null;
-  let paused = false;
-  let lastSaid = [];
-  let actions = [];
-  let dept = null, doneDepts = new Set();
-  let speechRun = 0;
-  const st = { meeting: null };
-
-  // ---------- voices: English assistant, Italian female voice for Italian drafts ----------
-  const synth = window.speechSynthesis || null;
-  let enVoice = null, itVoice = null;
-  const score = (v, prefs) => prefs.reduce((s, p, i) => s + (p.test(v.name) ? (prefs.length - i) * 10 : 0), 0) + (/natural|neural|premium|enhanced|online/i.test(v.name) ? 5 : 0);
-  function pickVoices() {
-    if (!synth) return;
-    const vs = synth.getVoices();
-    const en = vs.filter(v => /^en[-_]GB/i.test(v.lang));
-    const enAny = en.length ? en : vs.filter(v => /^en/i.test(v.lang));
-    enVoice = enAny.sort((a, b) => score(b, [/sonia/i, /libby/i, /serena/i, /kate/i, /martha/i, /google uk english/i, /daniel/i]) - score(a, [/sonia/i, /libby/i, /serena/i, /kate/i, /martha/i, /google uk english/i, /daniel/i]))[0] || null;
-    const it = vs.filter(v => /^it/i.test(v.lang) && !/luca|diego|cosimo|giorgio|giuseppe|benigno|\bmale\b/i.test(v.name));
-    const femalePrefs = [/elsa/i, /isabella/i, /alice/i, /federica/i, /paola/i, /google italiano/i, /bianca/i, /emma/i, /giulia/i, /carla/i];
-    itVoice = it.sort((a, b) => score(b, femalePrefs) - score(a, femalePrefs))[0] || null;
-    // a voice the viewer picked earlier wins over the automatic choice
-    const saved = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-    enVoice = vs.find(v => v.name === saved("sim-en-voice")) || enVoice;
-    itVoice = vs.find(v => v.name === saved("sim-it-voice")) || itVoice;
-    fillSelect($("en-voice"), vs.filter(v => /^en/i.test(v.lang)), enVoice, "No English voices on this device");
-    fillSelect($("it-voice"), vs.filter(v => /^it/i.test(v.lang)), itVoice, "No Italian voices on this device");
-  }
-  const human = (v) => /natural|neural|premium|enhanced|online/i.test(v.name);
-  function fillSelect(sel, list, chosen, emptyText) {
-    sel.innerHTML = "";
-    if (!list.length) { const o = document.createElement("option"); o.textContent = emptyText; sel.append(o); sel.disabled = true; return; }
-    sel.disabled = false;
-    list.sort((a, b) => (human(b) - human(a)) || a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name));
-    for (const v of list) {
-      const o = document.createElement("option");
-      o.value = v.name; o.textContent = (human(v) ? "★ " : "") + v.name + " (" + v.lang + ")";
-      if (chosen && v.name === chosen.name) o.selected = true;
-      sel.append(o);
-    }
-  }
-  function chooseVoice(which, name) {
-    const v = synth ? synth.getVoices().find(x => x.name === name) : null;
-    if (!v) return;
-    if (which === "en") enVoice = v; else itVoice = v;
-    try { localStorage.setItem(which === "en" ? "sim-en-voice" : "sim-it-voice", name); } catch (e) {}
-  }
-  $("en-voice").addEventListener("change", (e) => chooseVoice("en", e.target.value));
-  $("it-voice").addEventListener("change", (e) => chooseVoice("it", e.target.value));
-  $("en-prev").addEventListener("click", () => speak([{ text: "Good morning, Michele. Four priorities today. Shall I open the Agenda?", lang: "en" }]));
-  $("it-prev").addEventListener("click", () => speak([{ text: "Buongiorno Pierluigi, le invio entro domani i codici fiscali mancanti. Cordiali saluti, Michele.", lang: "it" }]));
-  if (synth) { pickVoices(); try { synth.addEventListener("voiceschanged", pickVoices); } catch (e) {} } else { $("voices").textContent = "This browser has no speech voices; text only."; $("en-voice").disabled = true; $("it-voice").disabled = true; }
-
-  function speakOne(text, lang, run) {
-    return new Promise((resolve) => {
-      if (!voiceOn || !synth || run !== speechRun) return resolve();
-      try {
-        const u = new SpeechSynthesisUtterance(text);
-        if (lang === "it") { u.lang = "it-IT"; if (itVoice) u.voice = itVoice; u.rate = 1.0; orb.classList.add("italian"); setState("Reading the Italian draft…"); }
-        else { u.lang = "en-GB"; if (enVoice) u.voice = enVoice; u.rate = 1.02; orb.classList.remove("italian"); setState("Speaking…"); }
-        orb.classList.add("speaking");
-        u.onend = resolve; u.onerror = resolve;
-        synth.speak(u);
-      } catch (e) { resolve(); }
-    });
-  }
-  async function speak(parts) {
-    stopListening();
-    if (!synth || !voiceOn) { speaking = false; return; }
-    const run = ++speechRun;
-    speaking = true;
-    try { synth.cancel(); } catch (e) {}
-    for (const p of parts) { if (run !== speechRun) return; await speakOne(p.text, p.lang, run); }
-    if (run === speechRun) { speaking = false; orb.classList.remove("speaking", "italian"); setState("Your turn."); }
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const DAYNAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const day0 = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const TODAY = day0(new Date());
+  const D = (s) => day0(new Date(s + "T12:00:00"));
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  function label(d) {
+    if (!d) return "No date";
+    const diff = Math.round((d - TODAY) / 864e5);
+    const nice = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+    if (diff < 0) return "Overdue · " + nice;
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    return nice;
   }
 
-  // ---------- listening (works when the file is opened in Chrome or Edge, outside Claude) ----------
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-  let handsFree = false, rec = null, listening = false, speaking = false, heardFinal = false, finished = false;
-  const micBtn = $("mic-btn"), micStatus = $("mic-status");
-  const MIC_HELP = "Turn on hands-free and it listens after every answer. Say “pause” to hold, “carry on” to resume.";
-  function micUI() {
-    micBtn.textContent = "Hands-free: " + (handsFree ? "on" : "off");
-    micBtn.setAttribute("aria-pressed", String(handsFree));
-  }
-  function micOff(msg) { handsFree = false; stopListening(); micUI(); if (msg) micStatus.textContent = msg; }
-  function listen() {
-    if (!handsFree || !SR || listening || speaking || finished || input.disabled) return;
-    heardFinal = false;
-    try {
-      rec = new SR();
-      rec.lang = "en-GB"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-    } catch (e) { micOff("This browser can’t listen. Use Chrome or Edge on a computer."); return; }
-    rec.onstart = () => {
-      listening = true; orb.classList.add("listening");
-      setState(!dept ? "Listening… say “start the briefing”." : paused ? "Paused. Say “carry on” to resume." : "Listening… speak now.");
-    };
-    rec.onresult = (e) => {
-      let interim = "", final = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript;
-      }
-      input.value = (final || interim).trim();
-      if (final.trim()) {
-        heardFinal = true;
-        const heard = final.trim();
-        input.value = "";
-        try { rec.stop(); } catch (err) {}
-        setTimeout(() => handleHeard(heard), 0);
-      }
-    };
-    rec.onerror = (e) => {
-      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) micOff("The microphone is blocked here. Inside Claude it always is: save the file and open it in Chrome or Edge, then allow the microphone.");
-      else if (e.error === "network") micOff("Speech recognition needs an internet connection. Check it and turn hands-free on again.");
-    };
-    rec.onend = () => {
-      listening = false; orb.classList.remove("listening");
-      if (handsFree && !heardFinal && !speaking && !finished) setTimeout(listen, 250);
-    };
-    try { rec.start(); } catch (e) { listening = false; }
-  }
-  function stopListening() {
-    if (rec) { try { rec.onend = null; rec.abort(); } catch (e) {} rec = null; }
-    listening = false; orb.classList.remove("listening");
-  }
-  function afterSpeak() { if (handsFree && !speaking) listen(); }
-  function handleHeard(text) {
-    const t = norm(text);
-    if (!dept) { if (/\b(start|begin|briefing|lets go|morning)\b/.test(t)) start(); else listen(); return; }
-    if (paused) { if (/\b(carry on|resume|continue|go on|lets go|back)\b/.test(t)) resume(text); else listen(); return; }
-    handleInput(text);
-  }
-  micBtn.addEventListener("click", () => {
-    if (handsFree) { micOff(MIC_HELP); return; }
-    if (!SR) { micStatus.textContent = "This browser can’t listen. Use Chrome or Edge on a computer."; return; }
-    handsFree = true; micUI(); micStatus.textContent = MIC_HELP;
-    if (!speaking) listen();
-  });
-  function setState(t) { stateEl.textContent = t; }
+  // Items from 23 October: Calendar, Asana and this morning’s Omi recording.
+  const SEED = [
+    { dept: "Agenda", title: "Spear meeting this afternoon", bullets: ["You told Omi you can’t miss it", "It isn’t in your calendar"], ask: "What time is it, and who’s in it?", due: "2026-10-23", prio: "High" },
+    { dept: "Agenda", title: "Taxes: text your accountant", bullets: ["Text around 1 pm", "Try to meet at 3 pm"], ask: "Still on for today? Anything to prepare?", due: "2026-10-23", prio: "High" },
+    { dept: "Hospitality", title: "Open 2027 bookings for the Masseria", bullets: ["Due today, P1", "Blocks 2027 wedding contracts and the April opening"], ask: "What does it take to finish, and by when?", due: "2026-10-23", prio: "High", blocks: "Wedding contracts 2027" },
+    { dept: "Hospitality", title: "Reply to Aaron & Lauren", bullets: ["Wedding, exclusive use 22–25 May 2027", "40 guests"], ask: "Reply now, or wait for 2027 prices?", due: "2026-10-06", prio: "Medium" },
+    { dept: "Finance", title: "Accountant: missing tax codes", bullets: ["Pierluigi Giorgio needs codici fiscali", "Invoices N75 (Tobias Spiess) and N85 (Gloria Cicala)"], ask: "When can you send them?", due: "2026-10-13", prio: "Medium" },
+    { dept: "Finance", title: "Ghost Ship 3PL invoices", bullets: ["2026-0893 is overdue", "2026-0912 not due yet"], ask: "When will you pay, and should I tell JS?", due: "2026-10-13", prio: "Medium" },
+    { dept: "Finance", title: "Refund 8 duplicate Stripe charges", bullets: ["Money: you do this by hand"], ask: "When will you do it?", due: "2026-10-09", prio: "Medium" },
+    { dept: "Shop", title: "Customers on backorder", bullets: ["Renee Wisniewski (#12520)", "Whitney Boggs (#12503)", "Refund or wait for the new harvest"], ask: "Reply today or later?", due: "2026-10-12", prio: "Low" },
+  ];
+  const PRIO = { High: 0, Medium: 1, Low: 2 };
 
-  // ---------- rendering ----------
-  function addMsg(who, text, label) {
-    const d = document.createElement("div");
-    d.className = "msg " + who;
-    if (who !== "sys") { const l = document.createElement("span"); l.className = "lbl"; l.textContent = label || (who === "you" ? "You" : "Assistant"); d.append(l); }
-    d.append(document.createTextNode(text));
-    transcriptEl.append(d);
-    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  let items, order, pos, history;
+  function init() {
+    items = SEED.map((s, i) => ({ ...s, id: i, due: D(s.due), status: "Open", notes: "", changes: [], discussed: false, owner: "", waiting: "" }));
+    order = items.map(i => i.id);  // walk through in the order we agreed: Agenda, Hospitality, Finance, Shop
+    pos = 0; history = [];
+    $("summary").hidden = true;
+    clearAnswer(); render();
   }
-  function renderDepts() {
-    $("depts").innerHTML = "";
-    for (const d of DEPTS) {
-      const li = document.createElement("li");
-      li.textContent = d;
-      if (d === dept) li.className = "active"; else if (doneDepts.has(d)) li.className = "done";
-      $("depts").append(li);
-    }
+  function sortOpen(list) {
+    // due today or overdue first, then by priority, then by date
+    const bucket = (i) => !i.due ? 2 : i.due <= TODAY ? 0 : 1;
+    return list.slice().sort((a, b) => bucket(a) - bucket(b) || PRIO[a.prio] - PRIO[b.prio] || (a.due ? a.due : 8.64e15) - (b.due ? b.due : 8.64e15) || a.id - b.id);
   }
-  function setDept(d) {
-    if (!d || d === dept) return;
-    if (dept) doneDepts.add(dept);
-    dept = d; renderDepts();
-  }
-  function act(kind, tool, text) {
-    actions.push({ kind, tool, text });
-    if (logEl.querySelector(".empty")) logEl.innerHTML = "";
-    const li = document.createElement("li"); li.className = kind;
-    const k = document.createElement("span"); k.className = "k"; k.textContent = tool;
-    li.append(k, document.createTextNode(text));
-    logEl.append(li);
-  }
-  function setChips(list) {
-    chipsEl.innerHTML = "";
-    for (const c of list) {
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "chip" + (c.cls ? " " + c.cls : ""); b.textContent = c.label;
-      b.addEventListener("click", c.onClick);
-      chipsEl.append(b);
-    }
-  }
-  // parts: string, or [{text, lang:"en"|"it", draft?:true}]
-  function assistantSays(parts) {
-    if (typeof parts === "string") parts = [{ text: parts, lang: "en" }];
-    lastSaid = parts;
-    for (const p of parts) {
-      if (p.draft) addMsg("draft", p.text, p.lang === "it" ? "Draft · Italian" : "Draft · English");
-      else addMsg("claude", p.text);
-    }
-    return speak(parts).then(afterSpeak);
-  }
-  const say = (t) => ({ text: t, lang: "en" });
-  const draftIt = (t) => ({ text: t, lang: "it", draft: true });
-  const draftEn = (t) => ({ text: t, lang: "en", draft: true });
+  const cur = () => items[order[pos]];
 
-  // ---------- script (real data from 23 October) ----------
+  // ---------- understanding the answer ----------
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9: ]/g, " ").replace(/\s+/g, " ").trim();
-  const YES = ["yes", "yeah", "yep", "go", "go ahead", "ok", "okay", "sure", "fine", "proceed", "sounds good", "do it", "please"];
-  const NO = ["no", "nope", "wait", "not now", "hold", "leave it", "hold on"];
-  const SEND = ["yes send it", "send it", "send"];
-  const SKIP = ["skip", "next", "later"];
-  const MORE = ["more detail", "more details", "details", "tell me more", "more"];
-
-  const S = {
-    open: { dept: "Opening",
-      enter: () => act("read", "Omi · Calendar · Asana · Missive", "Reads the last 24 hours of conversations, today’s calendar and open tasks."),
-      say: () => [say("Good morning, Michele. Four priorities today. First, something urgent: your meeting with Spear this afternoon isn’t in your calendar. What time is it?")],
-      opts: [
-        { label: "Half two", keys: ["half two", "2:30", "14:30", "two thirty", "half past two"], go: () => { st.meeting = "2:30"; return "confirmMeeting"; } },
-        { label: "Half three", keys: ["half three", "3:30", "15:30", "three thirty", "half past three"], go: () => { st.meeting = "3:30"; return "confirmMeeting"; } },
-        { label: "Not sure, remind me later", keys: ["not sure", "remind me", "dont know", "later"], go: "meetingLater" },
-      ] },
-    confirmMeeting: { dept: "Opening",
-      say: () => [say(`Got it: Spear, today at ${st.meeting}. Is that right?`)],
-      opts: [
-        { label: "Yes", keys: YES.concat(["right", "correct"]), go: () => { act("create", "Google Calendar", `“Spear meeting” today at ${st.meeting}, alerts 30 and 10 minutes before on phone and computer.`); return "meetingDone"; } },
-        { label: "No, different time", keys: NO, go: "open" },
-      ] },
-    meetingLater: { dept: "Opening",
-      enter: () => act("create", "Google Calendar", "Reminder at 12:00: “Check the time of the Spear meeting”."),
-      say: () => [say("No problem. I’ll remind you at noon to check the time. Shall I open Agenda?")],
-      opts: [ { label: "Go ahead", keys: YES, go: "agenda" }, { label: "Skip Agenda", keys: SKIP, go: "hospitality" } ] },
-    meetingDone: { dept: "Opening",
-      say: () => [say("Done. I’ll nudge you thirty and ten minutes before. Shall I open Agenda?")],
-      opts: [ { label: "Go ahead", keys: YES, go: "agenda" }, { label: "Skip Agenda", keys: SKIP, go: "hospitality" } ] },
-    agenda: { dept: "Agenda",
-      say: () => [say("Opening Agenda. This morning you said you need to text someone about your taxes around one, and try to meet at three. Who do you need to text?")],
-      opts: [
-        { label: "My accountant", keys: ["accountant", "cpa", "commercialista"], go: "agendaRemind" },
-        { label: "More detail", keys: MORE, go: "agendaDetail" },
-        { label: "Skip", keys: SKIP, go: "hospitality" },
-      ] },
-    agendaDetail: { dept: "Agenda",
-      enter: () => act("read", "Omi", "Replays the 6:18 recording from the train to Victoria."),
-      say: () => [say("From this morning’s recording: you need to send him a message, maybe around one, and try to meet him at three. It’s about your taxes. Who is it?")],
-      opts: [ { label: "My accountant", keys: ["accountant", "cpa", "commercialista"], go: "agendaRemind" }, { label: "Skip", keys: SKIP, go: "hospitality" } ] },
-    agendaRemind: { dept: "Agenda",
-      say: () => [say("I’ll set a reminder at one to text your accountant, and put the meeting in at three." + (st.meeting ? ` Heads up: that’s close to your Spear meeting at ${st.meeting}.` : "") + " Shall I go ahead?")],
-      opts: [
-        { label: "Yes, go ahead", keys: YES, go: () => { act("create", "Google Calendar", "Reminder 13:00 “Text the accountant (taxes)” and event 15:00 “Meet the accountant”."); return "hospitality"; } },
-        { label: "No", keys: NO, go: "hospitality" },
-      ] },
-    hospitality: { dept: "Hospitality",
-      enter: () => act("read", "Asana · Octorate", "Task “2027 bookings open” (P1, due today) and open Masseria enquiries."),
-      say: () => [say("Opening Hospitality. The 2027 bookings opening for the Masseria is due today, and it’s high priority. It’s holding up the 2027 wedding contracts and the April opening. What do you need to close it?")],
-      opts: [
-        { label: "2027 prices and a reply to Aaron and Lauren", keys: ["prices", "aaron", "lauren", "reply"], go: "aaron" },
-        { label: "Skip", keys: SKIP, go: "finance" },
-      ] },
-    aaron: { dept: "Hospitality",
-      say: () => [say("Aaron and Lauren would like exclusive use of the Masseria from the 22nd to the 25th of May 2027, for forty guests. Shall I draft a reply?")],
-      opts: [
-        { label: "Yes, draft it", keys: YES.concat(["draft"]), go: () => { act("create", "Missive", "Draft reply to Aaron & Lauren in English (not sent)."); return "aaronRead"; } },
-        { label: "No", keys: NO, go: "deadline" },
-      ] },
-    aaronRead: { dept: "Hospitality",
-      say: () => [say("Here’s the draft."), draftEn("Dear Aaron and Lauren, thank you for thinking of us. The 22nd to the 25th of May 2027 is available for exclusive use. We’ll send you our full proposal with prices by Friday. Warm regards, Michele."), say("Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the email to Aaron & Lauren after “yes, send it”."); return "deadline"; } },
-        { label: "Yes", keys: YES, go: "aaronGeneric" },
-        { label: "No, wait for the prices", keys: NO, go: "deadline" },
-      ] },
-    aaronGeneric: { dept: "Hospitality",
-      say: () => [say("Before anything goes outside the company, I need a clear “yes, send it”. Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the email to Aaron & Lauren after “yes, send it”."); return "deadline"; } },
-        { label: "No, wait for the prices", keys: NO, go: "deadline" },
-      ] },
-    deadline: { dept: "Hospitality",
-      say: () => [say("I’ll move the 2027 bookings deadline to Friday and add a “2027 prices” task that blocks it. Go ahead?")],
-      opts: [
-        { label: "Go ahead", keys: YES, go: () => { act("create", "Asana", "“2027 bookings open” moved to Friday; new task “2027 prices” blocking it."); return "finance"; } },
-        { label: "No", keys: NO, go: "finance" },
-      ] },
-    finance: { dept: "Finance",
-      enter: () => act("read", "Asana · Zoho Books", "Accountant requests, Ghost Ship 3PL invoices, duplicate Stripe charges."),
-      say: () => [say("Hospitality’s done. Opening Finance. Your accountant, Pierluigi Giorgio, is still waiting on two invoices: N75 for Tobias Spiess and N85 for Gloria Cicala are missing the tax codes. He writes in Italian, so shall I draft the reply in Italian?")],
-      opts: [
-        { label: "Yes, in Italian", keys: YES.concat(["italian"]), go: () => { act("create", "Missive", "Draft reply to Pierluigi Giorgio in Italian (not sent)."); return "pierRead"; } },
-        { label: "Skip", keys: SKIP, go: "ghost" },
-      ] },
-    pierRead: { dept: "Finance",
-      say: () => [say("Here it is, in Italian."), draftIt("Buongiorno Pierluigi, grazie per la segnalazione. Le invio entro domani i codici fiscali mancanti per la fattura N75 di Tobias Spiess e la fattura N85 di Gloria Cicala. Cordiali saluti, Michele."), say("Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the Italian email to Pierluigi Giorgio after “yes, send it”."); return "ghost"; } },
-        { label: "Yes", keys: YES, go: "pierGeneric" },
-        { label: "No, keep it as a draft", keys: NO, go: "ghost" },
-      ] },
-    pierGeneric: { dept: "Finance",
-      say: () => [say("I need a clear “yes, send it” for that one. Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the Italian email to Pierluigi Giorgio after “yes, send it”."); return "ghost"; } },
-        { label: "No", keys: NO, go: "ghost" },
-      ] },
-    ghost: { dept: "Finance",
-      say: () => [say("Next: two invoices from Ghost Ship 3PL, and one is overdue. Shall I check them in Zoho?")],
-      opts: [
-        { label: "Yes, more detail", keys: YES.concat(MORE), go: "ghostDetail" },
-        { label: "Skip", keys: SKIP, go: "stripe" },
-      ] },
-    ghostDetail: { dept: "Finance",
-      enter: () => act("read", "Zoho Books", "Reads invoices 2026-0893 and 2026-0912."),
-      say: () => [say("Invoice 0893 is overdue; 0912 isn’t due yet. Shall I draft a note to JS saying when you’ll pay?")],
-      opts: [
-        { label: "Yes, by the end of the month", keys: YES.concat(["end of the month"]), go: () => { act("create", "Missive", "Draft to JS (Ghost Ship 3PL): payment by 31 October (not sent)."); return "ghostRead"; } },
-        { label: "No", keys: NO, go: "stripe" },
-      ] },
-    ghostRead: { dept: "Finance",
-      say: () => [say("Draft’s ready."), draftEn("Hi JS, just confirming we’ll settle invoices 0893 and 0912 by the 31st of October. Thanks for your patience. Michele."), say("Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the email to JS after “yes, send it”."); return "stripe"; } },
-        { label: "Yes", keys: YES, go: "ghostGeneric" },
-        { label: "No, keep it as a draft", keys: NO, go: "stripe" },
-      ] },
-    ghostGeneric: { dept: "Finance",
-      say: () => [say("I need a clear “yes, send it” for that one. Shall I send it?")],
-      opts: [
-        { label: "Yes, send it", keys: SEND, go: () => { act("external", "Missive", "Sends the email to JS after “yes, send it”."); return "stripe"; } },
-        { label: "No", keys: NO, go: "stripe" },
-      ] },
-    stripe: { dept: "Finance",
-      say: () => [say("Last thing in Finance: eight duplicate Stripe charges to refund. I don’t handle refunds or payments, so I’ll add a task for you to do by hand this afternoon. All right?")],
-      opts: [
-        { label: "All right", keys: YES.concat(["all right", "alright"]), go: () => { act("manual", "Asana", "Task “Refund 8 duplicate Stripe charges” this afternoon, by hand."); return "shop"; } },
-        { label: "Can’t you do it?", keys: ["can you do it", "cant you", "do it yourself", "you do it", "refund them"], go: "stripeNo" },
-      ] },
-    stripeNo: { dept: "Finance",
-      say: () => [say("I’m afraid not. Anything that moves money stays with you. Shall I add the task?")],
-      opts: [
-        { label: "Yes", keys: YES, go: () => { act("manual", "Asana", "Task “Refund 8 duplicate Stripe charges” this afternoon, by hand."); return "shop"; } },
-        { label: "No", keys: NO, go: "shop" },
-      ] },
-    shop: { dept: "Shop",
-      enter: () => act("read", "Asana", "Backordered customers: Renee Wisniewski (#12520), Whitney Boggs (#12503)."),
-      say: () => [say("Finance done. Last one: the Shop. Two customers with backordered orders are waiting to hear from you. Do you want to cover it now?")],
-      opts: [
-        { label: "Skip, I’ll do it tomorrow", keys: SKIP.concat(["tomorrow"]), go: () => { act("create", "Asana", "Replies to backordered customers moved to tomorrow morning."); return "close"; } },
-        { label: "Yes", keys: YES, go: "shopYes" },
-      ] },
-    shopYes: { dept: "Shop",
-      say: () => [say("Renee Wisniewski and Whitney Boggs need to choose between a refund and waiting for the new harvest. Shall I draft two emails offering that choice?")],
-      opts: [
-        { label: "Yes, draft them", keys: YES.concat(["draft"]), go: () => { act("create", "Missive", "Two drafts to Renee and Whitney: refund or new harvest (not sent)."); return "close"; } },
-        { label: "No", keys: NO, go: "close" },
-      ] },
-    close: { dept: "Wrap-up",
-      say: () => [say("There are also about forty-five smaller items sitting in Asana. Shall we do a ten-minute tidy-up tomorrow?")],
-      opts: [
-        { label: "Yes", keys: YES, go: () => { act("create", "Google Calendar", "Tomorrow, 10 minutes: “Tidy up overdue Asana tasks”."); return "recap"; } },
-        { label: "No", keys: NO, go: "recap" },
-      ] },
-    recap: { dept: "Wrap-up",
-      enter: () => act("create", "Asana", "Saves the session summary."),
-      say: () => {
-        const n = (k) => actions.filter(a => a.kind === k).length;
-        const made = n("create"), sent = n("external"), manual = n("manual");
-        const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
-        const w = (x) => words[x] || String(x);
-        return [say(`Quick recap. I’ve set up ${w(made)} thing${made === 1 ? "" : "s"} for you: reminders, drafts and tasks.` + (sent ? ` I sent ${w(sent)} email${sent === 1 ? "" : "s"}, each after your “yes, send it”.` : " Nothing has gone out to anyone.") + (manual ? ` You’ve got ${w(manual)} job${manual === 1 ? "" : "s"} to do by hand.` : "") + " Have a good day, Michele.")];
-      },
-      opts: [] },
-  };
-
-  async function enterStep(id) {
-    current = id; const s = S[id];
-    setDept(s.dept);
-    if (s.enter) s.enter();
-    renderScriptChips();
-    await assistantSays(s.say());
-  }
-  function renderScriptChips() {
-    const s = S[current];
-    if (!s) return;
-    if (!s.opts.length) {
-      finished = true; stopListening();
-      setState("Session finished.");
-      doneDepts.add(dept); renderDepts();
-      setChips([{ label: "Start again", cls: "start", onClick: reset }]);
-      return;
-    }
-    const list = s.opts.map(o => ({ label: o.label, onClick: () => choose(o, o.label) }));
-    list.push({ label: "Repeat", cls: "util", onClick: () => handleUtil("repeat") });
-    list.push({ label: "Where are we?", cls: "util", onClick: () => handleUtil("where") });
-    list.push({ label: "Stop", cls: "util", onClick: () => handleUtil("stop") });
-    setChips(list);
-  }
-  function choose(o, spoken) {
-    addMsg("you", spoken);
-    const next = typeof o.go === "function" ? o.go() : o.go;
-    enterStep(next);
-  }
-  function handleUtil(cmd, spoken) {
-    addMsg("you", spoken || ({ repeat: "Repeat", where: "Where are we?", stop: "Stop" })[cmd]);
-    if (cmd === "repeat") { assistantSays(lastSaid); return true; }
-    if (cmd === "where") {
-      const left = DEPTS.filter(d => d !== dept && !doneDepts.has(d));
-      const back = mode === "script" && S[current] ? S[current].say() : [];
-      assistantSays([say(`We’re in ${dept}. ` + (left.length ? `Still to go: ${left.join(", ")}.` : "This is the last step.") + " Picking up where we left off.")].concat(back));
-      return true;
-    }
-    if (cmd === "stop") {
-      paused = true;
-      setChips([{ label: "Resume", cls: "start", onClick: () => resume("Resume") }]);
-      setState("Paused.");
-      assistantSays("Okay, I’ll pause here. Say “carry on” when you’re ready.");
-      return true;
-    }
-    return false;
-  }
-  function resume(spoken) {
-    paused = false; addMsg("you", spoken);
-    mode === "script" ? enterStep(current) : liveTurn("Let’s pick up where we left off.");
-  }
-  function matchUtil(t) {
-    if (/\b(repeat|say that again|come again)\b/.test(t)) return "repeat";
-    if (/where are we/.test(t)) return "where";
-    if (/^(stop|pause|hold it|hold on a second|wait a second)\b/.test(t)) return "stop";
+  const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, ten: 10, fourteen: 14 };
+  function parseDate(t) {
+    if (/\b(today|tonight|this afternoon|this evening|this morning)\b/.test(t)) return TODAY;
+    if (/\b(tomorrow)\b/.test(t)) return addDays(TODAY, 1);
+    if (/\bend of (the )?month\b/.test(t)) return new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0);
+    if (/\b(end of (the )?week|this week)\b/.test(t)) return nextDow(5, false);
+    if (/\bnext week\b/.test(t)) return addDays(nextDow(1, false), 0);
+    let m = t.match(/\bin (\d+|one|two|three|four|five|six|seven|ten|fourteen) (day|days|week|weeks)\b/);
+    if (m) { const n = NUM[m[1]] || parseInt(m[1], 10); return addDays(TODAY, /week/.test(m[2]) ? n * 7 : n); }
+    m = t.match(/\b(next )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+    if (m) return nextDow(DAYNAMES.indexOf(m[2]), !!m[1]);
     return null;
   }
-  function scriptFree(text) {
-    const t = norm(text);
-    const u = matchUtil(t); if (u) return handleUtil(u, text);
-    const s = S[current]; if (!s || !s.opts.length) return;
-    // the longest matching phrase wins, so "yes send it" beats "yes"
-    let best = null, bestLen = 0;
-    for (const o of s.opts) for (const k of o.keys) {
-      const re = new RegExp("(^|\\s)" + norm(k).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "($|\\s)");
-      if (re.test(t) && k.length > bestLen) { best = o; bestLen = k.length; }
-    }
-    if (best) return choose(best, text);
-    addMsg("you", text);
-    assistantSays("Sorry, I didn’t catch that. You can say: " + s.opts.map(o => "“" + o.label.toLowerCase() + "”").join(", ") + ".");
+  function nextDow(dow, forceNextWeek) {
+    let diff = (dow - TODAY.getDay() + 7) % 7;
+    if (diff === 0) diff = 7;
+    if (forceNextWeek && diff < 7) diff += 7;
+    return addDays(TODAY, diff);
+  }
+  function understand(text) {
+    const t = norm(text), found = {};
+    const d = parseDate(t); if (d) found.due = d;
+    if (/\b(urgent|asap|top priority|high priority|right away|first thing)\b/.test(t)) found.prio = "High";
+    else if (/\b(low priority|not urgent|can wait|no rush|whenever)\b/.test(t)) found.prio = "Low";
+    if (/\b(already done|its done|it s done|all done|thats done|that s done|mark it done|mark it as done|completed|taken care of|already sorted)\b/.test(t)) found.status = "Done";
+    let m = text.match(/\bwaiting (?:on|for) ([A-Za-z][A-Za-z ]{1,29}?)(?= to | before |[.,;!?]|$)/i);
+    if (m) found.waiting = m[1].trim();
+    m = t.match(/\b(?:assign it to|give it to|ask|delegate to) ([a-z]+)\b/);
+    if (m && !["him", "her", "them", "me"].includes(m[1])) found.owner = m[1][0].toUpperCase() + m[1].slice(1);
+    return found;
   }
 
-  // ---------- Live Claude (sample) ----------
-  const samplePromise = window.claude && window.claude.use ? window.claude.use("sample") : Promise.resolve(null);
-  let liveTurns = [], liveCtl = null;
-  const RULES = `You are Michele's executive assistant, a native English speaker based in London, running his spoken morning briefing (Especially Puglia and Masseria Pietra e Terra). This is a SIMULATION: you have no real tools; describe what you would do.
-
-LANGUAGE:
-- Always speak to Michele in natural, native English (British), even if he writes in Italian.
-- Emails and messages are drafted in the RECIPIENT's language: Italian contacts (e.g. the accountant Pierluigi Giorgio, Italian suppliers) get Italian; English-speaking customers get English. Put the draft text in "email", never inside "say".
-
-STYLE:
-- Short sentences, two or three at most. One question at a time, and end by asking whether to go ahead.
-- Departments in order: Opening, Agenda, Hospitality, Finance, Shop, Wrap-up. Say when you open and close each one.
-- Commands he may use: yes/go ahead, no, skip, stop, go back, repeat, more detail, where are we.
-- Reading: just do it. Creating tasks, reminders, drafts: announce and proceed unless he says no. Sending to anyone outside or changing external data: read the exact text and wait for "yes, send it" (a plain "yes" is not enough). Deleting, paying, refunding: never; create a task for him to do by hand.
-- If a name, time or amount is unclear, repeat it back and ask him to confirm.
-
-TODAY'S DATA (23 October):
-- Calendar: 9:00 customer inbox; 16:30 US/UK inbox; 17:00 weekly packages and inventory report. The afternoon meeting with "Spear" (mentioned to Omi this morning) is NOT in the calendar; time unknown.
-- Omi this morning: about his taxes he must text someone around 13:00 and try to meet at 15:00 (person unclear, probably the accountant).
-- Asana: due today "2027 bookings open – Masseria" (P1), blocking 2027 wedding contracts and the April opening. Pending reply to Aaron & Lauren: wedding, exclusive use 22–25 May 2027, 40 guests. Accountant Pierluigi Giorgio (writes in Italian) needs missing tax codes (codice fiscale) for invoices N75 (Tobias Spiess) and N85 (Gloria Cicala). Ghost Ship 3PL invoices 2026-0893 (overdue) and 2026-0912. 8 duplicate Stripe charges to refund. Backordered customers: Renee Wisniewski (#12520), Whitney Boggs (#12503). Over 50 overdue tasks, about 45 minor.
-
-FORMAT: reply ONLY with one JSON object:
-{"say": "what you say aloud, in English", "email": null or {"lang": "it" or "en", "text": "the draft"}, "after": null or "a short English question after the draft, e.g. Shall I send it?", "dept": "Opening|Agenda|Hospitality|Finance|Shop|Wrap-up", "action": null or {"type": "read|create|external|manual", "tool": "e.g. Google Calendar", "text": "what you would do"}, "done": false}
-Set "done": true only after the final recap.`;
-  const KIND = { read: "read", create: "create", external: "external", manual: "manual" };
-
-  async function liveTurn(userText) {
-    const sample = await samplePromise;
-    if (!sample) { addMsg("sys", "Live Claude isn’t available in this view. Switching to the script."); setMode("script"); reset(); return; }
-    liveTurns.push({ role: "user", content: userText });
-    if (liveTurns.length > 24) liveTurns = liveTurns.slice(-24);
-    liveCtl = new AbortController();
-    orb.classList.add("thinking"); setState("Thinking…"); setInputBusy(true);
-    try {
-      const r = await sample.json([{ role: "user", content: RULES }, ...liveTurns], { modelTier: "quick", cache: false, signal: liveCtl.signal });
-      const spoken = r && typeof r.say === "string" ? r.say : "";
-      if (!spoken) throw { code: "invalid_json" };
-      liveTurns.push({ role: "assistant", content: JSON.stringify(r) });
-      if (typeof r.dept === "string" && DEPTS.includes(r.dept)) setDept(r.dept);
-      if (r.action && typeof r.action === "object" && r.action.text) act(KIND[r.action.type] || "read", String(r.action.tool || "Assistant"), String(r.action.text));
-      orb.classList.remove("thinking");
-      const parts = [say(spoken)];
-      if (r.email && typeof r.email === "object" && r.email.text) parts.push(r.email.lang === "it" ? draftIt(String(r.email.text)) : draftEn(String(r.email.text)));
-      if (typeof r.after === "string" && r.after) parts.push(say(r.after));
-      if (r.done) { finished = true; stopListening(); doneDepts.add(dept); renderDepts(); setChips([{ label: "Start again", cls: "start", onClick: reset }]); }
-      else liveChips();
-      setInputBusy(false);
-      await assistantSays(parts);
-      if (r.done) setState("Session finished.");
-    } catch (e) {
-      orb.classList.remove("thinking");
-      liveTurns.pop();
-      const code = e && e.code;
-      if (code === "cancelled") setState("Stopped.");
-      else if (["not_granted", "sampling_disabled", "capability_disabled", "not_declared"].includes(code)) { addMsg("sys", "Live Claude wasn’t allowed in this view. Switching to the script."); setMode("script"); reset(); return; }
-      else if (code === "rate_limited") addMsg("sys", "Too many requests in a short time. Try again in a minute.");
-      else addMsg("sys", "The reply didn’t come through. Try the same sentence again.");
-      liveChips(); setInputBusy(false); afterSpeak();
+  // ---------- live answer for the current item ----------
+  let finalText = "", interimText = "";
+  function clearAnswer() { finalText = ""; interimText = ""; drawTranscript(); }
+  function drawTranscript() {
+    const el = $("transcript"); el.innerHTML = "";
+    if (!finalText && !interimText) { const s = document.createElement("span"); s.className = "empty"; s.textContent = "Your answer appears here as you speak."; el.append(s); }
+    else {
+      const f = document.createElement("span"); f.className = "final"; f.textContent = finalText; el.append(f);
+      if (interimText) { const i = document.createElement("span"); i.className = "interim"; i.textContent = (finalText ? " " : "") + interimText; el.append(i); }
+    }
+    el.scrollTop = el.scrollHeight;
+    const found = understand(finalText + " " + interimText), h = $("heard"); h.innerHTML = "";
+    const tag = (txt) => { const s = document.createElement("span"); s.className = "tag"; s.textContent = txt; h.append(s); };
+    if (found.due) tag("Due → " + label(found.due));
+    if (found.prio) tag("Priority → " + found.prio);
+    if (found.status) tag("Mark as done");
+    if (found.waiting) tag("Waiting on " + found.waiting);
+    if (found.owner) tag("Owner → " + found.owner);
+  }
+  // spoken commands at the end of a phrase
+  function command(chunk) {
+    const t = norm(chunk);
+    if (/(^|\s)(next|next one|next item|next please|move on)$/.test(t)) return { cmd: "next", rest: chunk.replace(/\b(next( one| item| please)?|move on)\W*$/i, "").trim() };
+    if (/(^|\s)(skip|skip it|come back to it|come back to this)$/.test(t)) return { cmd: "later", rest: chunk.replace(/\b(skip( it)?|come back to (it|this))\W*$/i, "").trim() };
+    if (/(^|\s)(go back|previous one|previous)$/.test(t)) return { cmd: "back", rest: "" };
+    if (/(^|\s)(pause|stop recording)$/.test(t)) return { cmd: "pause", rest: chunk.replace(/\b(pause|stop recording)\W*$/i, "").trim() };
+    return null;
+  }
+  function addFinal(chunk) {
+    const c = command(chunk);
+    const text = c ? c.rest : chunk.trim();
+    if (text) finalText = (finalText ? finalText + " " : "") + text;
+    interimText = ""; drawTranscript();
+    if (c) {
+      if (c.cmd === "next") closeItem();
+      else if (c.cmd === "later") later();
+      else if (c.cmd === "back") goBack();
+      else if (c.cmd === "pause") stopRec("Paused. Press record or type to carry on.");
     }
   }
-  function liveChips() {
-    const quick = ["Yes", "No", "Skip", "More detail", "Yes, send it", "Repeat", "Where are we?", "Stop"];
-    setChips(quick.map(q => ({ label: q, cls: ["Repeat", "Where are we?", "Stop"].includes(q) ? "util" : "", onClick: () => {
-      if (q === "Repeat") return handleUtil("repeat");
-      if (q === "Stop") return handleUtil("stop");
-      addMsg("you", q); liveTurn(q);
-    } })));
-  }
-  function setInputBusy(b) { sendBtn.disabled = b; input.disabled = b; chipsEl.querySelectorAll("button").forEach(x => x.disabled = b); }
 
-  // ---------- controls ----------
-  function reset() {
-    speechRun++; speaking = false; finished = false;
-    if (synth) try { synth.cancel(); } catch (e) {}
-    stopListening();
-    orb.classList.remove("speaking", "italian", "thinking");
-    if (liveCtl) liveCtl.abort();
-    transcriptEl.innerHTML = ""; logEl.innerHTML = '<li class="empty">Nothing yet. Start the briefing.</li>';
-    actions = []; dept = null; doneDepts = new Set(); st.meeting = null; liveTurns = []; paused = false; lastSaid = [];
-    renderDepts(); setState("Ready. Press “Start the briefing”.");
-    setChips([{ label: "Start the briefing", cls: "start", onClick: start }]);
-    if (handsFree) setTimeout(listen, 300);
+  // ---------- closing an item and re-ordering ----------
+  function closeItem() {
+    const it = cur(); if (!it) return;
+    const snapshot = JSON.stringify({ items, order, pos });
+    const found = understand(finalText);
+    it.changes = [];
+    if (found.due && (!it.due || found.due.getTime() !== it.due.getTime())) { it.changes.push(`due ${label(it.due)} → ${label(found.due)}`); it.due = found.due; }
+    if (found.prio && found.prio !== it.prio) { it.changes.push(`priority ${it.prio} → ${found.prio}`); it.prio = found.prio; }
+    if (found.waiting) { it.waiting = found.waiting; it.changes.push("waiting on " + found.waiting); }
+    if (found.owner) { it.owner = found.owner; it.changes.push("owner " + found.owner); }
+    if (finalText) it.notes = finalText;
+    it.discussed = true;
+    if (found.status === "Done") { it.status = "Done"; it.changes.push("closed"); }
+    history.push(snapshot);
+    advance();
   }
-  function start() {
-    addMsg("you", "Okay, let’s start the briefing.");
-    if (mode === "script") enterStep("open");
-    else { setDept("Opening"); act("read", "Omi · Calendar · Asana", "Reads today’s context and calendar (simulated)."); liveTurn("Okay, let’s start the briefing."); }
+  function later() {
+    const it = cur(); if (!it) return;
+    history.push(JSON.stringify({ items, order, pos }));
+    if (finalText) it.notes = finalText;
+    order.splice(pos, 1); order.push(it.id);
+    clearAnswer(); render(true);
   }
-  function setMode(m) {
-    mode = m;
-    $("mode-script").setAttribute("aria-pressed", String(m === "script"));
-    $("mode-live").setAttribute("aria-pressed", String(m === "live"));
-    $("hint").textContent = m === "live"
-      ? "Live Claude follows the real assistant prompt and answers anything you type. It uses your Claude account and asks your permission on the first reply."
-      : "Always available: repeat, where are we?, pause. Inside Claude the microphone is blocked: save this file and open it in Chrome or Edge on your computer to talk to it.";
+  function goBack() {
+    if (!history.length) return;
+    const s = JSON.parse(history.pop());
+    items = s.items.map(i => ({ ...i, due: i.due ? day0(new Date(i.due)) : null }));
+    order = s.order; pos = s.pos;
+    const it = cur(); finalText = it && it.notes ? it.notes : ""; interimText = "";
+    drawTranscript(); render();
   }
-  $("mode-script").addEventListener("click", () => { if (mode !== "script") { setMode("script"); reset(); } });
-  $("mode-live").addEventListener("click", () => { if (mode !== "live") { setMode("live"); reset(); } });
-  function setVoice(on) {
-    voiceOn = on;
-    $("voice-on").setAttribute("aria-pressed", String(on)); $("voice-off").setAttribute("aria-pressed", String(!on));
-    if (!on) { speechRun++; if (synth) try { synth.cancel(); } catch (e) {} orb.classList.remove("speaking", "italian"); }
+  function advance() {
+    // the walkthrough keeps its order; the task list on the right re-sorts by the new dates and priorities
+    pos += 1;
+    clearAnswer();
+    if (pos >= order.length) finish(); else render(true);
   }
-  $("voice-on").addEventListener("click", () => setVoice(true));
-  $("voice-off").addEventListener("click", () => setVoice(false));
-  if (!synth) { setVoice(false); $("voice-on").disabled = true; }
 
-  $("say-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const text = input.value.trim(); if (!text) return;
-    input.value = "";
-    stopListening();
-    if (!dept) { start(); return; }
-    if (paused) { resume(text); return; }
-    handleInput(text);
+  // ---------- rendering ----------
+  function render(flash) {
+    const it = cur();
+    const total = order.length, n = Math.min(pos + 1, total);
+    $("progress").textContent = it ? `Item ${n} of ${total}` : "";
+    if (it) {
+      $("c-dept").textContent = it.dept; $("c-title").textContent = it.title;
+      const ul = $("c-bullets"); ul.innerHTML = "";
+      for (const b of it.bullets) { const li = document.createElement("li"); li.textContent = b; ul.append(li); }
+      const meta = $("c-meta"); meta.innerHTML = "";
+      const tag = (txt, cls) => { const s = document.createElement("span"); s.className = "tag" + (cls ? " " + cls : ""); s.textContent = txt; meta.append(s); };
+      tag(label(it.due), it.due && it.due < TODAY ? "over" : "");
+      tag("Priority " + it.prio, it.prio === "High" ? "high" : "");
+      if (it.blocks) tag("Blocks: " + it.blocks);
+      $("c-ask").textContent = it.ask;
+    }
+    $("back").disabled = !history.length;
+    // the queue: every open task, sorted by date and priority
+    const q = $("queue"); q.innerHTML = "";
+    const open = sortOpen(items.filter(i => i.status === "Open"));
+    $("qcount").textContent = open.length + " open";
+    for (const t of open) {
+      const li = document.createElement("li");
+      li.className = (it && t.id === it.id ? "current " : "") + (t.discussed ? "discussed " : "") + (flash && t.changes.length && t.discussed ? "changed" : "");
+      const qt = document.createElement("span"); qt.className = "qt"; qt.textContent = t.title;
+      const qm = document.createElement("span"); qm.className = "qm";
+      const tg = (txt, cls) => { const s = document.createElement("span"); s.className = "tag" + (cls ? " " + cls : ""); s.textContent = txt; qm.append(s); };
+      tg(t.dept); tg(label(t.due), t.due && t.due < TODAY ? "over" : ""); tg(t.prio, t.prio === "High" ? "high" : "");
+      if (t.waiting) tg("Waiting: " + t.waiting);
+      li.append(qt, qm);
+      if (t.changes.length) { const c = document.createElement("span"); c.className = "chg"; c.textContent = t.changes.join(" · "); li.append(c); }
+      q.append(li);
+    }
+    const closed = items.filter(i => i.status === "Done");
+    $("closed").hidden = !closed.length;
+    $("closedlist").innerHTML = "";
+    for (const c of closed) { const li = document.createElement("li"); li.textContent = c.title; $("closedlist").append(li); }
+    if (flash) setTimeout(() => document.querySelectorAll(".queue li.changed").forEach(x => x.classList.remove("changed")), 1600);
+  }
+  function finish() {
+    stopRec("");
+    render();
+    $("progress").textContent = "All items covered";
+    $("card").hidden = true;
+    const lines = [`Morning briefing, ${DAYS[TODAY.getDay()]} ${TODAY.getDate()} ${MONTHS[TODAY.getMonth()]}: please apply these changes in Asana and Google Calendar.`, ""];
+    for (const t of items) {
+      if (!t.discussed && !t.notes) continue;
+      const bits = [];
+      if (t.status === "Done") bits.push("mark as DONE");
+      else bits.push(`due ${label(t.due)}`, `priority ${t.prio}`);
+      if (t.waiting) bits.push(`waiting on ${t.waiting}`);
+      if (t.owner) bits.push(`owner ${t.owner}`);
+      lines.push(`- [${t.dept}] ${t.title}: ${bits.join(", ")}` + (t.changes.length ? ` (changed: ${t.changes.join("; ")})` : " (no change)"));
+      if (t.notes) lines.push(`  My words: "${t.notes}"`);
+    }
+    const open = sortOpen(items.filter(i => i.status === "Open"));
+    lines.push("", "New order of my open tasks:");
+    open.forEach((t, i) => lines.push(`${i + 1}. ${t.title} (${label(t.due)}, ${t.prio})`));
+    $("sumtext").value = lines.join("\n");
+    $("summary").hidden = false;
+  }
+
+  // ---------- microphone (works when the file is opened in Chrome or Edge, outside Claude) ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  let rec = null, recording = false;
+  function setRecUI() {
+    $("rec").setAttribute("aria-pressed", String(recording));
+    $("rec-label").textContent = recording ? "Recording… (say “pause”)" : "Start recording";
+  }
+  function micBanner(msg) { $("micbanner").textContent = msg; $("micbanner").hidden = !msg; }
+  function startRec() {
+    if (!SR) { micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or use your keyboard’s dictation in the box below."); return; }
+    if (recording) return;
+    recording = true; setRecUI(); $("recstate").textContent = "Listening…";
+    rec = new SR(); rec.lang = "en-GB"; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) addFinal(r[0].transcript); else interim += r[0].transcript;
+      }
+      interimText = interim.trim(); drawTranscript();
+    };
+    rec.onerror = (e) => {
+      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) { stopRec(""); micBanner("The microphone is blocked here (inside Claude it always is). Download the file and open it in Chrome or Edge, or type / use your keyboard’s dictation below."); }
+      else if (e.error === "network") { stopRec(""); micBanner("Speech recognition needs an internet connection."); }
+    };
+    rec.onend = () => { if (recording) { try { rec.start(); } catch (err) { stopRec(""); } } };
+    try { rec.start(); } catch (e) { stopRec(""); }
+  }
+  function stopRec(msg) {
+    recording = false; setRecUI();
+    if (rec) { rec.onend = null; try { rec.stop(); } catch (e) {} rec = null; }
+    if (interimText) { finalText = (finalText ? finalText + " " : "") + interimText; interimText = ""; drawTranscript(); }
+    $("recstate").textContent = msg || "";
+  }
+  $("rec").addEventListener("click", () => recording ? stopRec("Paused.") : startRec());
+  $("next").addEventListener("click", () => { if (interimText) { finalText = (finalText + " " + interimText).trim(); interimText = ""; } closeItem(); });
+  $("skip").addEventListener("click", later);
+  $("back").addEventListener("click", goBack);
+  $("typeform").addEventListener("submit", (e) => { e.preventDefault(); const v = $("typein").value.trim(); if (!v) return; $("typein").value = ""; addFinal(v); });
+  $("copy").addEventListener("click", () => {
+    const ta = $("sumtext");
+    const ok = () => { $("copystate").textContent = "Copied. Paste it into Claude."; };
+    const fallback = () => { ta.focus(); ta.select(); $("copystate").textContent = "Selected. Press Ctrl+C (Cmd+C on Mac)."; };
+    try { navigator.clipboard.writeText(ta.value).then(ok, fallback); } catch (e) { fallback(); }
   });
-  function handleInput(text) {
-    if (mode === "script") { scriptFree(text); return; }
-    const u = matchUtil(norm(text));
-    if (u === "repeat" || u === "stop") handleUtil(u, text);
-    else { addMsg("you", text); liveTurn(text); }
-  }
+  $("restart").addEventListener("click", () => { $("card").hidden = false; init(); });
+  if (!SR) micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or use your keyboard’s dictation in the box below.");
 
-  samplePromise.then((s) => { if (!s) $("mode-live").hidden = true; });
-
-  reset();
+  init();
 })();
 </script>
 
