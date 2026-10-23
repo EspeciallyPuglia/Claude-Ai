@@ -22,3 +22,11 @@ tu parli, Claude legge Omi e Plaud, apre i reparti e agisce chiedendo conferma.
 
 - **Omi**: sempre acceso. Idee e comandi al volo, contesto della giornata.
 - **Plaud**: lo accendi tu. Riunioni, telefonate, incontri.
+
+## Controllo del computer
+
+1. **Connettori** (Missive, Asana, Zoho, Google Drive, Calendar): Claude lavora
+   sui dati senza aprire le app. È sempre la prima scelta.
+2. **Claude in Chrome**: per i siti senza connettore, per esempio GoShip.
+3. **Computer use** (app desktop di Claude): apre e chiude le app sul computer.
+   Permessi dati app per app; mai a banca o dati personali.
