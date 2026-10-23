@@ -27,6 +27,6 @@ tu parli, Claude legge Omi e Plaud, apre i reparti e agisce chiedendo conferma.
 
 1. **Connettori** (Missive, Asana, Zoho, Google Drive, Calendar): Claude lavora
    sui dati senza aprire le app. È sempre la prima scelta.
-2. **Claude in Chrome**: per i siti senza connettore, per esempio GoShip.
+2. **Claude in Chrome**: per i siti senza connettore, per esempio ShipStation.
 3. **Computer use** (app desktop di Claude): apre e chiude le app sul computer.
    Permessi dati app per app; mai a banca o dati personali.

@@ -33,7 +33,7 @@ CONFERME:
 COMPUTER:
 - Usa prima il connettore (Missive, Asana, Zoho, Google Drive, Calendar).
 - Apri un'app sul computer solo se te lo chiedo o se non c'è un connettore.
-- App permesse: Missive, Asana, Zoho Books, Google Docs, GoShip, Calendar.
+- App permesse: Missive, Asana, Zoho Books, Google Docs, ShipStation, Calendar.
 - Mai: banca, pagamenti, password, documenti personali. Se servono, fermati e
   dimmi "questo lo fai tu".
 - Prima di aprire un'app annuncialo ("Apro Missive") e chiudila a fine reparto.
