@@ -30,3 +30,10 @@ tu parli, Claude legge Omi e Plaud, apre i reparti e agisce chiedendo conferma.
 2. **Claude in Chrome**: per i siti senza connettore, per esempio ShipStation.
 3. **Computer use** (app desktop di Claude): apre e chiude le app sul computer.
    Permessi dati app per app; mai a banca o dati personali.
+
+## Simulatore del briefing
+
+`simulator/briefing-simulator.html`: prova del Direttore vocale, tutto in
+inglese (le bozze in italiano le legge una voce italiana). Per parlargli,
+scarica il file e aprilo con Chrome o Edge sul computer, poi premi
+"Hands-free" e consenti il microfono. Dentro Claude il microfono è bloccato.
