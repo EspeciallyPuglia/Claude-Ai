@@ -103,7 +103,11 @@ aside.backstage { background: var(--surface); border: 1px solid var(--line); bor
 aside h2 { font-family: var(--font-display); font-size: 20px; margin: 0; }
 aside .note { color: var(--muted); font-size: 13px; margin: 0; }
 .voices { font-size: 13px; color: var(--muted); margin: 0; }
-.voices b { color: var(--fg); font-weight: 400; }
+.voicepick { display: flex; flex-direction: column; gap: 6px; }
+.voicepick label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.vrow { display: flex; gap: 6px; }
+.vrow select { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+.prev { font: inherit; font-size: 13px; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
 .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .log li { border-left: 3px solid var(--line); padding: 2px 0 2px 12px; font-size: 14px; }
 .log li .k { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
@@ -161,7 +165,13 @@ aside .note { color: var(--muted); font-size: 13px; margin: 0; }
     <aside class="backstage" aria-label="Behind the scenes">
       <h2>Behind the scenes</h2>
       <p class="note">What the assistant would do with your connectors. Data read on 23 October from Calendar, Asana and Omi.</p>
-      <p class="voices" id="voices">Voices: loading…</p>
+      <div class="voicepick">
+        <label for="en-voice">Assistant voice</label>
+        <div class="vrow"><select id="en-voice"></select><button type="button" class="prev" id="en-prev">Preview</button></div>
+        <label for="it-voice">Italian drafts voice</label>
+        <div class="vrow"><select id="it-voice"></select><button type="button" class="prev" id="it-prev">Preview</button></div>
+        <p class="voices" id="voices">Voices marked “Natural” sound the most human. Microsoft Edge has the best free ones.</p>
+      </div>
       <div class="legend">
         <span style="--c: var(--line)">reads</span>
         <span style="--c: var(--accent)">creates for you</span>
@@ -203,11 +213,37 @@ aside .note { color: var(--muted); font-size: 13px; margin: 0; }
     const it = vs.filter(v => /^it/i.test(v.lang) && !/luca|diego|cosimo|giorgio|giuseppe|benigno|\bmale\b/i.test(v.name));
     const femalePrefs = [/elsa/i, /isabella/i, /alice/i, /federica/i, /paola/i, /google italiano/i, /bianca/i, /emma/i, /giulia/i, /carla/i];
     itVoice = it.sort((a, b) => score(b, femalePrefs) - score(a, femalePrefs))[0] || null;
-    $("voices").innerHTML = "";
-    const line = (label, v, fallback) => { const s = document.createElement("span"); s.append(label + ": "); const b = document.createElement("b"); b.textContent = v ? v.name : fallback; s.append(b); return s; };
-    $("voices").append(line("Assistant", enVoice, "browser default English"), document.createElement("br"), line("Italian drafts", itVoice, "no Italian voice on this device"));
+    // a voice the viewer picked earlier wins over the automatic choice
+    const saved = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    enVoice = vs.find(v => v.name === saved("sim-en-voice")) || enVoice;
+    itVoice = vs.find(v => v.name === saved("sim-it-voice")) || itVoice;
+    fillSelect($("en-voice"), vs.filter(v => /^en/i.test(v.lang)), enVoice, "No English voices on this device");
+    fillSelect($("it-voice"), vs.filter(v => /^it/i.test(v.lang)), itVoice, "No Italian voices on this device");
   }
-  if (synth) { pickVoices(); try { synth.addEventListener("voiceschanged", pickVoices); } catch (e) {} } else { $("voices").textContent = "This browser has no speech voices; text only."; }
+  const human = (v) => /natural|neural|premium|enhanced|online/i.test(v.name);
+  function fillSelect(sel, list, chosen, emptyText) {
+    sel.innerHTML = "";
+    if (!list.length) { const o = document.createElement("option"); o.textContent = emptyText; sel.append(o); sel.disabled = true; return; }
+    sel.disabled = false;
+    list.sort((a, b) => (human(b) - human(a)) || a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name));
+    for (const v of list) {
+      const o = document.createElement("option");
+      o.value = v.name; o.textContent = (human(v) ? "★ " : "") + v.name + " (" + v.lang + ")";
+      if (chosen && v.name === chosen.name) o.selected = true;
+      sel.append(o);
+    }
+  }
+  function chooseVoice(which, name) {
+    const v = synth ? synth.getVoices().find(x => x.name === name) : null;
+    if (!v) return;
+    if (which === "en") enVoice = v; else itVoice = v;
+    try { localStorage.setItem(which === "en" ? "sim-en-voice" : "sim-it-voice", name); } catch (e) {}
+  }
+  $("en-voice").addEventListener("change", (e) => chooseVoice("en", e.target.value));
+  $("it-voice").addEventListener("change", (e) => chooseVoice("it", e.target.value));
+  $("en-prev").addEventListener("click", () => speak([{ text: "Good morning, Michele. Four priorities today. Shall I open the Agenda?", lang: "en" }]));
+  $("it-prev").addEventListener("click", () => speak([{ text: "Buongiorno Pierluigi, le invio entro domani i codici fiscali mancanti. Cordiali saluti, Michele.", lang: "it" }]));
+  if (synth) { pickVoices(); try { synth.addEventListener("voiceschanged", pickVoices); } catch (e) {} } else { $("voices").textContent = "This browser has no speech voices; text only."; $("en-voice").disabled = true; $("it-voice").disabled = true; }
 
   function speakOne(text, lang, run) {
     return new Promise((resolve) => {
