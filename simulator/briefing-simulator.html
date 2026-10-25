@@ -10,17 +10,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
-/* Layout: one item card at a time with the live transcript under it (left), the task queue re-ordering itself as you go (right). */
+/* Layout: one slide at a time (the question, big), with the live answer bar under it, like presenter view. */
 :root {
   --bg: #0E1719;
+  --stage: #F3EEE2;
+  --stage-ink: #1C2826;
+  --stage-muted: #5E6B68;
   --surface: #16232A;
   --surface-2: #1D2E36;
   --line: #2A3D46;
   --fg: #ECE6D9;
   --muted: #9DB0B3;
-  --accent: #6CC3B5;
+  --accent: #2E8F82;
+  --accent-light: #6CC3B5;
   --accent-ink: #0B2421;
-  --warn: #E7A75A;
   --rec: #E98A7C;
   --rec-ink: #2A0F0B;
   --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
@@ -30,115 +33,89 @@
 * { box-sizing: border-box; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; margin: 0;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px;
 }
-.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 24px; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 5vw, 40px); line-height: 1.05; margin: 0; }
-.sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
-.progress { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
-.banner { background: var(--surface-2); border: 1px solid var(--warn); border-radius: 14px; padding: 10px 14px; font-size: 14px; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
-@media (min-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr) 360px; } }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.brand span { color: var(--muted); font-weight: 500; }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: block; }
+.dots i.done { background: var(--accent-light); }
+.dots i.now { background: var(--fg); outline: 2px solid var(--accent-light); outline-offset: 2px; }
+.banner { background: var(--surface-2); border: 1px solid var(--rec); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
 
-.dept { align-self: flex-start; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 3px 10px; border-radius: 999px; font-weight: 700; }
-.card h2 { font-family: var(--font-display); font-size: clamp(22px, 3.4vw, 30px); line-height: 1.15; margin: 0; text-wrap: balance; }
-.card ul { margin: 0; padding-left: 20px; color: var(--muted); }
-.card ul li { margin: 2px 0; }
-.ask { font-size: 18px; font-weight: 700; margin: 0; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px; }
-.tag { font-size: 13px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); font-variant-numeric: tabular-nums; }
-.tag.over { border-color: var(--warn); color: var(--warn); }
-.tag.high { border-color: var(--rec); color: var(--rec); }
+.stage { background: var(--stage); color: var(--stage-ink); border-radius: 20px; padding: clamp(22px, 4vw, 56px); display: flex; flex-direction: column; gap: clamp(12px, 2vw, 22px); min-height: min(62vh, 560px); position: relative; }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dept { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: #F3EEE2; background: var(--accent); padding: 3px 12px; border-radius: 999px; }
+.src { font-size: 14px; color: var(--stage-muted); }
+.src b { font-weight: 700; color: var(--stage-ink); }
+.stage h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5.4vw, 64px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.stage .ctx { margin: 0; padding-left: 22px; font-size: clamp(17px, 1.9vw, 22px); color: var(--stage-muted); }
+.stage .ctx li { margin: 3px 0; }
+.stage .q { margin-top: auto; font-family: var(--font-display); font-weight: 500; font-size: clamp(22px, 3vw, 36px); line-height: 1.2; color: var(--accent); text-wrap: balance; }
+.stage .q::before { content: "→ "; }
+.heard { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+.heard span { font-size: 14px; padding: 3px 10px; border-radius: 999px; background: #DCEFEA; color: #134A43; }
+.howto { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 8px; }
+.howto div { background: #E6E0D2; border-radius: 14px; padding: 14px 16px; }
+.howto b { display: block; font-family: var(--font-display); font-size: 18px; margin-bottom: 4px; }
+.howto p { margin: 0; color: var(--stage-muted); font-size: 15px; }
+.sumlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; }
+.sumlist li { background: #E6E0D2; border-radius: 12px; padding: 10px 14px; }
+.sumlist li b { font-family: var(--font-display); }
+.sumlist li .w { display: block; color: var(--stage-muted); font-size: 14px; font-style: italic; }
+.sumlist li .c { display: block; color: #134A43; font-size: 14px; }
 
-.rec-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.recbtn { font: inherit; font-weight: 700; font-size: 16px; border: 2px solid var(--rec); background: transparent; color: var(--fg); padding: 10px 18px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-.recbtn .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--rec); }
+.bar { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.recbtn { font: inherit; font-weight: 700; border: 2px solid var(--rec); background: transparent; color: var(--fg); padding: 8px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.recbtn .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--rec); }
 .recbtn[aria-pressed="true"] { background: var(--rec); color: var(--rec-ink); }
 .recbtn[aria-pressed="true"] .dot { background: var(--rec-ink); animation: blink 1s steps(2, start) infinite; }
 @keyframes blink { to { visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .recbtn[aria-pressed="true"] .dot { animation: none; } }
-.btn { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); padding: 9px 14px; border-radius: 12px; cursor: pointer; }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn { font: inherit; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+.btn.primary { background: var(--accent-light); color: var(--accent-ink); border-color: var(--accent-light); font-weight: 700; }
 .btn:disabled { opacity: .45; cursor: default; }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.recstate { color: var(--muted); font-size: 14px; }
-
-.transcript { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-height: 96px; max-height: 30vh; overflow-y: auto; overflow-wrap: anywhere; }
-.transcript .final { color: var(--fg); }
-.transcript .interim { color: var(--muted); font-style: italic; }
-.transcript .empty { color: var(--muted); font-size: 14px; }
-.heard { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; }
-.heard .tag { border-color: var(--accent); color: var(--accent); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
+.spacer { flex: 1; }
+.state { color: var(--muted); font-size: 14px; }
+.transcript { min-height: 28px; overflow-wrap: anywhere; }
+.transcript .f { color: var(--fg); }
+.transcript .i { color: var(--muted); font-style: italic; }
+.transcript .e { color: var(--muted); font-size: 14px; }
 .typerow { display: flex; gap: 8px; }
-.typerow input { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
+.typerow input { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
-
-.qhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.qhead h2 { font-family: var(--font-display); font-size: 20px; margin: 0; }
-.queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.queue li { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; transition: background .4s; }
-.queue li.current { border-color: var(--accent); background: var(--surface-2); }
-.queue li.changed { background: #22383A; }
-.queue li.discussed .qt::after { content: " ✓"; color: var(--accent); }
-.queue .qt { font-size: 14px; }
-.queue .qm { display: flex; flex-wrap: wrap; gap: 4px; }
-.queue .qm .tag { font-size: 12px; padding: 1px 8px; }
-.queue .chg { font-size: 12px; color: var(--accent); }
-.closed h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
-.closed ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
-
-.summary textarea { width: 100%; min-height: 220px; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; resize: vertical; }
+textarea.sum { position: absolute; left: -9999px; width: 1px; height: 1px; }
 </style>
 
 <div class="wrap">
-  <header>
-    <div>
-      <h1>Briefing Simulator</h1>
-      <p class="sub">One item at a time. Read the card, answer out loud, say “next”. Your answer is recorded live and the task list re-orders itself. Nothing is changed in Asana until you copy the summary to Claude.</p>
-    </div>
-    <div class="progress" id="progress"></div>
-  </header>
+  <div class="top">
+    <div class="brand">Morning briefing <span id="today"></span></div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </div>
   <div class="banner" id="micbanner" hidden></div>
 
-  <div class="grid">
-    <section class="panel card" id="card" aria-live="polite">
-      <span class="dept" id="c-dept"></span>
-      <h2 id="c-title"></h2>
-      <ul id="c-bullets"></ul>
-      <div class="meta" id="c-meta"></div>
-      <p class="ask" id="c-ask"></p>
+  <section class="stage" id="stage" aria-live="polite"></section>
 
-      <div class="rec-row">
-        <button type="button" class="recbtn" id="rec" aria-pressed="false"><span class="dot"></span><span id="rec-label">Start recording</span></button>
-        <button type="button" class="btn primary" id="next">Next</button>
-        <button type="button" class="btn" id="skip">Skip for now</button>
-        <button type="button" class="btn" id="back">Back</button>
-        <span class="recstate" id="recstate"></span>
-      </div>
-      <div class="transcript" id="transcript"><span class="empty">Your answer appears here as you speak.</span></div>
-      <div class="heard" id="heard" aria-label="What I picked up"></div>
-      <form class="typerow" id="typeform">
-        <input id="typein" type="text" autocomplete="off" placeholder="Or type / dictate here, then press Enter" aria-label="Your answer">
-        <button class="btn" type="submit">Add</button>
-      </form>
-      <p class="hint">Say “next” to close the item, “skip” to come back to it later, “go back” for the previous one, “pause” to stop recording. Dates like “Friday”, “tomorrow”, “end of the month”; “urgent” or “can wait”; “already done”; “waiting on …” are picked up automatically.</p>
-    </section>
-
-    <aside class="panel" aria-label="Your tasks">
-      <div class="qhead"><h2>Your tasks</h2><span class="progress" id="qcount"></span></div>
-      <ol class="queue" id="queue"></ol>
-      <div class="closed" id="closed" hidden><h3>Closed today</h3><ul id="closedlist"></ul></div>
-    </aside>
-  </div>
-
-  <section class="panel summary" id="summary" hidden>
-    <h2 style="font-family: var(--font-display); margin: 0;">Briefing done</h2>
-    <p class="hint" style="font-size: 15px;">Here’s what changed. Copy it and paste it into Claude (with Asana and Calendar connected) to apply it for real.</p>
-    <textarea id="sumtext" readonly aria-label="Summary"></textarea>
-    <div class="rec-row"><button type="button" class="btn primary" id="copy">Copy summary</button><button type="button" class="btn" id="restart">Start again</button><span class="recstate" id="copystate"></span></div>
+  <section class="bar" aria-label="Your answer">
+    <div class="controls">
+      <button type="button" class="recbtn" id="rec" aria-pressed="false"><span class="dot"></span><span id="reclabel">Start recording</span></button>
+      <span class="state" id="state"></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="back">← Back</button>
+      <button type="button" class="btn" id="skip">Skip for now</button>
+      <button type="button" class="btn primary" id="next">Next →</button>
+    </div>
+    <div class="transcript" id="transcript"></div>
+    <form class="typerow" id="typeform">
+      <input id="typein" type="text" autocomplete="off" placeholder="Or type / dictate your answer here and press Enter" aria-label="Your answer">
+    </form>
+    <p class="hint">Answer out loud, then say “next”. Also: “skip”, “go back”, “pause”. Keyboard: → next, ← back. Recording works when this file is opened in Chrome or Edge, outside Claude.</p>
   </section>
+  <textarea class="sum" id="sumtext" aria-hidden="true" tabindex="-1"></textarea>
 </div>
 
 <script>
@@ -149,233 +126,236 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   const DAYNAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const day0 = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   const TODAY = day0(new Date());
-  const D = (s) => day0(new Date(s + "T12:00:00"));
   const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const fmt = (d) => `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
   function label(d) {
-    if (!d) return "No date";
+    if (!d) return "no date";
     const diff = Math.round((d - TODAY) / 864e5);
-    const nice = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    if (diff < 0) return "Overdue · " + nice;
-    if (diff === 0) return "Today";
-    if (diff === 1) return "Tomorrow";
-    return nice;
+    if (diff < 0) return "overdue (" + fmt(d) + ")";
+    if (diff === 0) return "today";
+    if (diff === 1) return "tomorrow";
+    return fmt(d);
   }
+  $("today").textContent = "· " + fmt(TODAY);
 
-  // Items from 23 October: Calendar, Asana and this morning’s Omi recording.
-  const SEED = [
-    { dept: "Agenda", title: "Spear meeting this afternoon", bullets: ["You told Omi you can’t miss it", "It isn’t in your calendar"], ask: "What time is it, and who’s in it?", due: "2026-10-23", prio: "High" },
-    { dept: "Agenda", title: "Taxes: text your accountant", bullets: ["Text around 1 pm", "Try to meet at 3 pm"], ask: "Still on for today? Anything to prepare?", due: "2026-10-23", prio: "High" },
-    { dept: "Hospitality", title: "Open 2027 bookings for the Masseria", bullets: ["Due today, P1", "Blocks 2027 wedding contracts and the April opening"], ask: "What does it take to finish, and by when?", due: "2026-10-23", prio: "High", blocks: "Wedding contracts 2027" },
-    { dept: "Hospitality", title: "Reply to Aaron & Lauren", bullets: ["Wedding, exclusive use 22–25 May 2027", "40 guests"], ask: "Reply now, or wait for 2027 prices?", due: "2026-10-06", prio: "Medium" },
-    { dept: "Finance", title: "Accountant: missing tax codes", bullets: ["Pierluigi Giorgio needs codici fiscali", "Invoices N75 (Tobias Spiess) and N85 (Gloria Cicala)"], ask: "When can you send them?", due: "2026-10-13", prio: "Medium" },
-    { dept: "Finance", title: "Ghost Ship 3PL invoices", bullets: ["2026-0893 is overdue", "2026-0912 not due yet"], ask: "When will you pay, and should I tell JS?", due: "2026-10-13", prio: "Medium" },
-    { dept: "Finance", title: "Refund 8 duplicate Stripe charges", bullets: ["Money: you do this by hand"], ask: "When will you do it?", due: "2026-10-09", prio: "Medium" },
-    { dept: "Shop", title: "Customers on backorder", bullets: ["Renee Wisniewski (#12520)", "Whitney Boggs (#12503)", "Refund or wait for the new harvest"], ask: "Reply today or later?", due: "2026-10-12", prio: "Low" },
+  // Points taken from Omi recordings of 23 and 25 October: what the server would turn into questions overnight.
+  const POINTS = [
+    { dept: "Travel", title: "Miami: meeting the wine importer", src: "Fri 23 Oct, 12:38", srcTitle: "Miami travel plans", ctx: ["You’ll be in Miami on the 27th or 28th", "Plan: rent a car and meet the importer"], q: "Is the meeting booked? Which day and time?", due: "2026-10-27", prio: "High" },
+    { dept: "Personal", title: "Replacement credit cards", src: "Fri 23 Oct, 17:25", srcTitle: "Cards sent to an old address", ctx: ["Amex and Capital One are being sent to your old address", "A new tenant lives there now"], q: "How will you collect them?", due: null, prio: "High" },
+    { dept: "Customers", title: "Ryan: certificate and info packet", src: "Sun 25 Oct, 12:01", srcTitle: "Ryan requests help", ctx: ["He asked for a certificate and an information packet", "Email him when it’s done and mark it in ShipStation"], q: "What exactly does Ryan need, and by when?", due: null, prio: "Medium" },
+    { dept: "Email", title: "An email for just two people", src: "Sun 25 Oct, 11:41", srcTitle: "Narrowing an email to two recipients", ctx: ["You said: not everyone, only two people", "Who and what wasn’t clear in the recording"], q: "Who are the two people, and what’s it about?", due: null, prio: "Medium" },
+    { dept: "Logistics", title: "Book the container", src: "Sun 25 Oct, 11:42", srcTitle: "Container booking timing", ctx: ["Shipment around mid-November", "Could be the week before or the week after", "Date not set yet"], q: "When do you need to book it, and who confirms the date?", due: null, prio: "Medium" },
+    { dept: "Harvest", title: "Leccino olives to mill", src: "Sun 25 Oct, 11:57", srcTitle: "Matteo’s call and Leccino milling", ctx: ["You saw a missed call from Matteo", "There’s Leccino to grind this year"], q: "Call Matteo back? When is the milling?", due: null, prio: "Low" },
+    { dept: "Purchasing", title: "Olive oil prices in Torremaggiore", src: "Fri 23 Oct, 13:01", srcTitle: "Interview and olive-oil prices", ctx: ["Price mentioned: €7–10", "Quantity 2,500 (unit unclear)", "Someone should check prices in Torremaggiore"], q: "Who checks the price, and by when?", due: null, prio: "Low" },
   ];
   const PRIO = { High: 0, Medium: 1, Low: 2 };
 
-  let items, order, pos, history;
+  let order, idx, state, answers, history;
   function init() {
-    items = SEED.map((s, i) => ({ ...s, id: i, due: D(s.due), status: "Open", notes: "", changes: [], discussed: false, owner: "", waiting: "" }));
-    order = items.map(i => i.id);  // walk through in the order we agreed: Agenda, Hospitality, Finance, Shop
-    pos = 0; history = [];
-    $("summary").hidden = true;
+    order = POINTS.map((_, i) => i);
+    idx = -1;  // -1 = the intro slide
+    state = POINTS.map(p => ({ due: p.due ? day0(new Date(p.due + "T12:00:00")) : null, prio: p.prio, done: false, waiting: "", owner: "", changes: [], text: "", seen: false }));
+    history = [];
     clearAnswer(); render();
   }
-  function sortOpen(list) {
-    // due today or overdue first, then by priority, then by date
-    const bucket = (i) => !i.due ? 2 : i.due <= TODAY ? 0 : 1;
-    return list.slice().sort((a, b) => bucket(a) - bucket(b) || PRIO[a.prio] - PRIO[b.prio] || (a.due ? a.due : 8.64e15) - (b.due ? b.due : 8.64e15) || a.id - b.id);
-  }
-  const cur = () => items[order[pos]];
 
-  // ---------- understanding the answer ----------
+  // ---------- understanding an answer ----------
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9: ]/g, " ").replace(/\s+/g, " ").trim();
   const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, ten: 10, fourteen: 14 };
-  function parseDate(t) {
-    if (/\b(today|tonight|this afternoon|this evening|this morning)\b/.test(t)) return TODAY;
-    if (/\b(tomorrow)\b/.test(t)) return addDays(TODAY, 1);
-    if (/\bend of (the )?month\b/.test(t)) return new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0);
-    if (/\b(end of (the )?week|this week)\b/.test(t)) return nextDow(5, false);
-    if (/\bnext week\b/.test(t)) return addDays(nextDow(1, false), 0);
-    let m = t.match(/\bin (\d+|one|two|three|four|five|six|seven|ten|fourteen) (day|days|week|weeks)\b/);
-    if (m) { const n = NUM[m[1]] || parseInt(m[1], 10); return addDays(TODAY, /week/.test(m[2]) ? n * 7 : n); }
-    m = t.match(/\b(next )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
-    if (m) return nextDow(DAYNAMES.indexOf(m[2]), !!m[1]);
-    return null;
-  }
   function nextDow(dow, forceNextWeek) {
     let diff = (dow - TODAY.getDay() + 7) % 7;
     if (diff === 0) diff = 7;
     if (forceNextWeek && diff < 7) diff += 7;
     return addDays(TODAY, diff);
   }
+  function parseDate(t) {
+    if (/\b(today|tonight|this afternoon|this evening|this morning)\b/.test(t)) return TODAY;
+    if (/\btomorrow\b/.test(t)) return addDays(TODAY, 1);
+    if (/\bmid november\b/.test(t)) return new Date(TODAY.getFullYear(), 10, 15);
+    if (/\bend of (the )?month\b/.test(t)) return new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0);
+    if (/\b(end of (the )?week|this week)\b/.test(t)) return nextDow(5, false);
+    if (/\bnext week\b/.test(t)) return nextDow(1, false);
+    let m = t.match(/\bin (\d+|one|two|three|four|five|six|seven|ten|fourteen) (day|days|week|weeks)\b/);
+    if (m) { const n = NUM[m[1]] || parseInt(m[1], 10); return addDays(TODAY, /week/.test(m[2]) ? n * 7 : n); }
+    m = t.match(/\bthe (\d{1,2})(st|nd|rd|th)?\b/);
+    if (m) { const d = parseInt(m[1], 10); if (d >= 1 && d <= 31) { let x = new Date(TODAY.getFullYear(), TODAY.getMonth(), d); if (x < TODAY) x = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, d); return day0(x); } }
+    m = t.match(/\b(next )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+    if (m) return nextDow(DAYNAMES.indexOf(m[2]), !!m[1]);
+    return null;
+  }
   function understand(text) {
-    const t = norm(text), found = {};
-    const d = parseDate(t); if (d) found.due = d;
-    if (/\b(urgent|asap|top priority|high priority|right away|first thing)\b/.test(t)) found.prio = "High";
-    else if (/\b(low priority|not urgent|can wait|no rush|whenever)\b/.test(t)) found.prio = "Low";
-    if (/\b(already done|its done|it s done|all done|thats done|that s done|mark it done|mark it as done|completed|taken care of|already sorted)\b/.test(t)) found.status = "Done";
+    const t = norm(text), f = {};
+    const d = parseDate(t); if (d) f.due = d;
+    if (/\b(urgent|asap|top priority|high priority|right away|first thing)\b/.test(t)) f.prio = "High";
+    else if (/\b(low priority|not urgent|can wait|no rush|whenever)\b/.test(t)) f.prio = "Low";
+    if (/\b(already done|its done|it s done|all done|thats done|that s done|mark it done|mark it as done|completed|taken care of|already sorted|already booked)\b/.test(t)) f.done = true;
     let m = text.match(/\bwaiting (?:on|for) ([A-Za-z][A-Za-z ]{1,29}?)(?= to | before |[.,;!?]|$)/i);
-    if (m) found.waiting = m[1].trim();
-    m = t.match(/\b(?:assign it to|give it to|ask|delegate to) ([a-z]+)\b/);
-    if (m && !["him", "her", "them", "me"].includes(m[1])) found.owner = m[1][0].toUpperCase() + m[1].slice(1);
-    return found;
+    if (m) f.waiting = m[1].trim();
+    m = text.match(/\b(?:assign it to|give it to|delegate (?:it )?to|ask) ([A-Z][a-z]+)\b/);
+    if (m) f.owner = m[1];
+    return f;
   }
 
-  // ---------- live answer for the current item ----------
+  // ---------- the live answer ----------
   let finalText = "", interimText = "";
-  function clearAnswer() { finalText = ""; interimText = ""; drawTranscript(); }
-  function drawTranscript() {
+  function clearAnswer() { finalText = ""; interimText = ""; drawAnswer(); }
+  function drawAnswer() {
     const el = $("transcript"); el.innerHTML = "";
-    if (!finalText && !interimText) { const s = document.createElement("span"); s.className = "empty"; s.textContent = "Your answer appears here as you speak."; el.append(s); }
+    if (!finalText && !interimText) { const s = document.createElement("span"); s.className = "e"; s.textContent = idx < 0 ? "Say “next” or press Next to start." : "Your answer appears here as you speak."; el.append(s); }
     else {
-      const f = document.createElement("span"); f.className = "final"; f.textContent = finalText; el.append(f);
-      if (interimText) { const i = document.createElement("span"); i.className = "interim"; i.textContent = (finalText ? " " : "") + interimText; el.append(i); }
+      const f = document.createElement("span"); f.className = "f"; f.textContent = finalText; el.append(f);
+      if (interimText) { const i = document.createElement("span"); i.className = "i"; i.textContent = (finalText ? " " : "") + interimText; el.append(i); }
     }
-    el.scrollTop = el.scrollHeight;
-    const found = understand(finalText + " " + interimText), h = $("heard"); h.innerHTML = "";
-    const tag = (txt) => { const s = document.createElement("span"); s.className = "tag"; s.textContent = txt; h.append(s); };
-    if (found.due) tag("Due → " + label(found.due));
-    if (found.prio) tag("Priority → " + found.prio);
-    if (found.status) tag("Mark as done");
-    if (found.waiting) tag("Waiting on " + found.waiting);
-    if (found.owner) tag("Owner → " + found.owner);
+    const h = document.getElementById("heard");
+    if (h) {
+      h.innerHTML = "";
+      const f = understand(finalText + " " + interimText);
+      const tag = (x) => { const s = document.createElement("span"); s.textContent = x; h.append(s); };
+      if (f.due) tag("Due → " + label(f.due));
+      if (f.prio) tag("Priority → " + f.prio);
+      if (f.done) tag("Done");
+      if (f.waiting) tag("Waiting on " + f.waiting);
+      if (f.owner) tag("Owner → " + f.owner);
+    }
   }
-  // spoken commands at the end of a phrase
   function command(chunk) {
     const t = norm(chunk);
-    if (/(^|\s)(next|next one|next item|next please|move on)$/.test(t)) return { cmd: "next", rest: chunk.replace(/\b(next( one| item| please)?|move on)\W*$/i, "").trim() };
-    if (/(^|\s)(skip|skip it|come back to it|come back to this)$/.test(t)) return { cmd: "later", rest: chunk.replace(/\b(skip( it)?|come back to (it|this))\W*$/i, "").trim() };
-    if (/(^|\s)(go back|previous one|previous)$/.test(t)) return { cmd: "back", rest: "" };
+    if (/(^|\s)(next|next one|next slide|next please|move on)$/.test(t)) return { cmd: "next", rest: chunk.replace(/\b(next( one| slide| please)?|move on)\W*$/i, "").trim() };
+    if (/(^|\s)(skip|skip it|come back to it|come back to this)$/.test(t)) return { cmd: "skip", rest: chunk.replace(/\b(skip( it)?|come back to (it|this))\W*$/i, "").trim() };
+    if (/(^|\s)(go back|previous one|previous slide)$/.test(t)) return { cmd: "back", rest: "" };
     if (/(^|\s)(pause|stop recording)$/.test(t)) return { cmd: "pause", rest: chunk.replace(/\b(pause|stop recording)\W*$/i, "").trim() };
     return null;
   }
   function addFinal(chunk) {
     const c = command(chunk);
     const text = c ? c.rest : chunk.trim();
-    if (text) finalText = (finalText ? finalText + " " : "") + text;
-    interimText = ""; drawTranscript();
-    if (c) {
-      if (c.cmd === "next") closeItem();
-      else if (c.cmd === "later") later();
-      else if (c.cmd === "back") goBack();
-      else if (c.cmd === "pause") stopRec("Paused. Press record or type to carry on.");
-    }
+    if (text && idx >= 0 && idx < order.length) finalText = (finalText ? finalText + " " : "") + text;
+    interimText = ""; drawAnswer();
+    if (c) ({ next, skip, back: goBack, pause: () => stopRec("Paused. Press record to carry on.") })[c.cmd]();
   }
 
-  // ---------- closing an item and re-ordering ----------
-  function closeItem() {
-    const it = cur(); if (!it) return;
-    const snapshot = JSON.stringify({ items, order, pos });
-    const found = understand(finalText);
-    it.changes = [];
-    if (found.due && (!it.due || found.due.getTime() !== it.due.getTime())) { it.changes.push(`due ${label(it.due)} → ${label(found.due)}`); it.due = found.due; }
-    if (found.prio && found.prio !== it.prio) { it.changes.push(`priority ${it.prio} → ${found.prio}`); it.prio = found.prio; }
-    if (found.waiting) { it.waiting = found.waiting; it.changes.push("waiting on " + found.waiting); }
-    if (found.owner) { it.owner = found.owner; it.changes.push("owner " + found.owner); }
-    if (finalText) it.notes = finalText;
-    it.discussed = true;
-    if (found.status === "Done") { it.status = "Done"; it.changes.push("closed"); }
-    history.push(snapshot);
-    advance();
+  // ---------- moving between slides ----------
+  const snap = () => JSON.stringify({ order, idx, state, finalText });
+  function next() {
+    if (interimText) { finalText = (finalText + " " + interimText).trim(); interimText = ""; }
+    if (idx >= order.length) return;
+    history.push(snap());
+    if (idx >= 0) {
+      const s = state[order[idx]], f = understand(finalText), p = POINTS[order[idx]];
+      s.changes = []; s.seen = true; s.text = finalText;
+      if (f.due && (!s.due || f.due.getTime() !== s.due.getTime())) { s.changes.push("due " + label(f.due)); s.due = f.due; }
+      if (f.prio && f.prio !== s.prio) { s.changes.push("priority " + f.prio); s.prio = f.prio; }
+      if (f.waiting) { s.waiting = f.waiting; s.changes.push("waiting on " + f.waiting); }
+      if (f.owner) { s.owner = f.owner; s.changes.push("owner " + f.owner); }
+      if (f.done) { s.done = true; s.changes.push("done"); }
+      if (!s.changes.length && !finalText) s.changes.push("no answer");
+    }
+    idx += 1;
+    clearAnswer(); render();
+    if (idx >= order.length) stopRec("");
   }
-  function later() {
-    const it = cur(); if (!it) return;
-    history.push(JSON.stringify({ items, order, pos }));
-    if (finalText) it.notes = finalText;
-    order.splice(pos, 1); order.push(it.id);
-    clearAnswer(); render(true);
+  function skip() {
+    if (idx < 0 || idx >= order.length) return;
+    history.push(snap());
+    const id = order.splice(idx, 1)[0]; order.push(id);
+    if (finalText) state[id].text = finalText;
+    clearAnswer(); render();
   }
   function goBack() {
     if (!history.length) return;
     const s = JSON.parse(history.pop());
-    items = s.items.map(i => ({ ...i, due: i.due ? day0(new Date(i.due)) : null }));
-    order = s.order; pos = s.pos;
-    const it = cur(); finalText = it && it.notes ? it.notes : ""; interimText = "";
-    drawTranscript(); render();
-  }
-  function advance() {
-    // the walkthrough keeps its order; the task list on the right re-sorts by the new dates and priorities
-    pos += 1;
-    clearAnswer();
-    if (pos >= order.length) finish(); else render(true);
+    order = s.order; idx = s.idx; finalText = s.finalText || ""; interimText = "";
+    state = s.state.map(x => ({ ...x, due: x.due ? day0(new Date(x.due)) : null }));
+    render(); drawAnswer();
   }
 
   // ---------- rendering ----------
-  function render(flash) {
-    const it = cur();
-    const total = order.length, n = Math.min(pos + 1, total);
-    $("progress").textContent = it ? `Item ${n} of ${total}` : "";
-    if (it) {
-      $("c-dept").textContent = it.dept; $("c-title").textContent = it.title;
-      const ul = $("c-bullets"); ul.innerHTML = "";
-      for (const b of it.bullets) { const li = document.createElement("li"); li.textContent = b; ul.append(li); }
-      const meta = $("c-meta"); meta.innerHTML = "";
-      const tag = (txt, cls) => { const s = document.createElement("span"); s.className = "tag" + (cls ? " " + cls : ""); s.textContent = txt; meta.append(s); };
-      tag(label(it.due), it.due && it.due < TODAY ? "over" : "");
-      tag("Priority " + it.prio, it.prio === "High" ? "high" : "");
-      if (it.blocks) tag("Blocks: " + it.blocks);
-      $("c-ask").textContent = it.ask;
-    }
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function render() {
+    const st = $("stage"); st.innerHTML = "";
+    const dots = $("dots"); dots.innerHTML = "";
+    for (let i = 0; i < order.length; i++) { const d = el("i", i < idx ? "done" : i === idx ? "now" : ""); dots.append(d); }
     $("back").disabled = !history.length;
-    // the queue: every open task, sorted by date and priority
-    const q = $("queue"); q.innerHTML = "";
-    const open = sortOpen(items.filter(i => i.status === "Open"));
-    $("qcount").textContent = open.length + " open";
-    for (const t of open) {
-      const li = document.createElement("li");
-      li.className = (it && t.id === it.id ? "current " : "") + (t.discussed ? "discussed " : "") + (flash && t.changes.length && t.discussed ? "changed" : "");
-      const qt = document.createElement("span"); qt.className = "qt"; qt.textContent = t.title;
-      const qm = document.createElement("span"); qm.className = "qm";
-      const tg = (txt, cls) => { const s = document.createElement("span"); s.className = "tag" + (cls ? " " + cls : ""); s.textContent = txt; qm.append(s); };
-      tg(t.dept); tg(label(t.due), t.due && t.due < TODAY ? "over" : ""); tg(t.prio, t.prio === "High" ? "high" : "");
-      if (t.waiting) tg("Waiting: " + t.waiting);
-      li.append(qt, qm);
-      if (t.changes.length) { const c = document.createElement("span"); c.className = "chg"; c.textContent = t.changes.join(" · "); li.append(c); }
-      q.append(li);
+    $("skip").disabled = idx < 0 || idx >= order.length;
+    $("next").textContent = idx < 0 ? "Start →" : idx >= order.length ? "Finished" : "Next →";
+    $("next").disabled = idx >= order.length;
+
+    if (idx < 0) {
+      const eb = el("div", "eyebrow"); eb.append(el("span", "dept", "How it works")); st.append(eb);
+      st.append(el("h1", null, "Your day, turned into a few questions"));
+      const g = el("div", "howto");
+      [["1 · Omi listens", "During the day Omi records what you promise, plan and worry about."],
+       ["2 · Overnight", "The server reads yesterday’s Omi conversations and picks out what needs a decision."],
+       ["3 · One slide each", `This morning: ${order.length} points, one question per slide. No long lists.`],
+       ["4 · You answer, say “next”", "Your answer is recorded live. “Next” closes the point and updates your tasks."]]
+        .forEach(([b, p]) => { const d = el("div"); d.append(el("b", null, b), el("p", null, p)); g.append(d); });
+      st.append(g);
+      st.append(el("p", "q", "Say “next” to begin"));
+      $("state").textContent = recording ? "Listening…" : "";
+      return;
     }
-    const closed = items.filter(i => i.status === "Done");
-    $("closed").hidden = !closed.length;
-    $("closedlist").innerHTML = "";
-    for (const c of closed) { const li = document.createElement("li"); li.textContent = c.title; $("closedlist").append(li); }
-    if (flash) setTimeout(() => document.querySelectorAll(".queue li.changed").forEach(x => x.classList.remove("changed")), 1600);
+    if (idx >= order.length) return renderSummary(st);
+
+    const id = order[idx], p = POINTS[id], s = state[id];
+    const eb = el("div", "eyebrow");
+    eb.append(el("span", "dept", p.dept));
+    const src = el("span", "src"); src.append("From Omi · " + p.src + " · "); src.append(el("b", null, "“" + p.srcTitle + "”")); eb.append(src);
+    st.append(eb);
+    st.append(el("h1", null, p.title));
+    const ul = el("ul", "ctx"); p.ctx.forEach(c => ul.append(el("li", null, c))); st.append(ul);
+    const meta = el("p", "src"); meta.textContent = `Now: ${label(s.due)} · priority ${s.prio}`; st.append(meta);
+    st.append(el("p", "q", p.q));
+    const heard = el("div", "heard"); heard.id = "heard"; st.append(heard);
+    drawAnswer();
   }
-  function finish() {
-    stopRec("");
-    render();
-    $("progress").textContent = "All items covered";
-    $("card").hidden = true;
-    const lines = [`Morning briefing, ${DAYS[TODAY.getDay()]} ${TODAY.getDate()} ${MONTHS[TODAY.getMonth()]}: please apply these changes in Asana and Google Calendar.`, ""];
-    for (const t of items) {
-      if (!t.discussed && !t.notes) continue;
-      const bits = [];
-      if (t.status === "Done") bits.push("mark as DONE");
-      else bits.push(`due ${label(t.due)}`, `priority ${t.prio}`);
-      if (t.waiting) bits.push(`waiting on ${t.waiting}`);
-      if (t.owner) bits.push(`owner ${t.owner}`);
-      lines.push(`- [${t.dept}] ${t.title}: ${bits.join(", ")}` + (t.changes.length ? ` (changed: ${t.changes.join("; ")})` : " (no change)"));
-      if (t.notes) lines.push(`  My words: "${t.notes}"`);
-    }
-    const open = sortOpen(items.filter(i => i.status === "Open"));
-    lines.push("", "New order of my open tasks:");
-    open.forEach((t, i) => lines.push(`${i + 1}. ${t.title} (${label(t.due)}, ${t.prio})`));
+  function renderSummary(st) {
+    const eb = el("div", "eyebrow"); eb.append(el("span", "dept", "Done")); st.append(eb);
+    st.append(el("h1", null, "Briefing finished"));
+    const open = order.map(id => ({ id, p: POINTS[id], s: state[id] })).filter(x => !x.s.done);
+    const bucket = (s) => !s.due ? 2 : s.due <= addDays(TODAY, 2) ? 0 : 1;
+    open.sort((a, b) => bucket(a.s) - bucket(b.s) || PRIO[a.s.prio] - PRIO[b.s.prio] || (a.s.due || 8.64e15) - (b.s.due || 8.64e15));
+    const ul = el("ul", "sumlist");
+    open.forEach((x, i) => {
+      const li = el("li");
+      li.append(el("b", null, `${i + 1}. ${x.p.title}`), document.createTextNode(` · ${label(x.s.due)} · ${x.s.prio}` + (x.s.waiting ? ` · waiting on ${x.s.waiting}` : "")));
+      if (x.s.text) li.append(el("span", "w", "“" + x.s.text + "”"));
+      if (x.s.changes.length) li.append(el("span", "c", "Changed: " + x.s.changes.join(", ")));
+      ul.append(li);
+    });
+    const done = order.filter(id => state[id].done).map(id => POINTS[id].title);
+    if (done.length) { const li = el("li"); li.append(el("b", null, "Closed: "), document.createTextNode(done.join(", "))); ul.append(li); }
+    st.append(ul);
+    const row = el("div", "controls");
+    const copy = el("button", "btn primary", "Copy summary for Claude"); copy.type = "button";
+    const again = el("button", "btn", "Start again"); again.type = "button";
+    const msg = el("span", "src");
+    row.append(copy, again, msg); st.append(row);
+    const lines = [`Morning briefing ${fmt(TODAY)}. Please create or update these tasks in Asana (and calendar events where there is a date):`, ""];
+    open.forEach((x, i) => {
+      lines.push(`${i + 1}. [${x.p.dept}] ${x.p.title}: due ${label(x.s.due)}, priority ${x.s.prio}` + (x.s.waiting ? `, waiting on ${x.s.waiting}` : "") + (x.s.owner ? `, owner ${x.s.owner}` : ""));
+      if (x.s.text) lines.push(`   My answer: "${x.s.text}"`);
+    });
+    if (done.length) lines.push("", "Already done: " + done.join("; "));
     $("sumtext").value = lines.join("\n");
-    $("summary").hidden = false;
+    copy.addEventListener("click", () => {
+      const ta = $("sumtext");
+      const ok = () => { msg.textContent = "Copied. Paste it into Claude."; };
+      const fallback = () => { ta.style.position = "static"; ta.style.width = "100%"; ta.style.height = "160px"; ta.focus(); ta.select(); msg.textContent = "Selected below: press Ctrl+C (Cmd+C on Mac)."; };
+      try { navigator.clipboard.writeText(ta.value).then(ok, fallback); } catch (e) { fallback(); }
+    });
+    again.addEventListener("click", init);
+    $("state").textContent = "";
   }
 
-  // ---------- microphone (works when the file is opened in Chrome or Edge, outside Claude) ----------
+  // ---------- microphone (Chrome or Edge, file opened outside Claude) ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   let rec = null, recording = false;
-  function setRecUI() {
-    $("rec").setAttribute("aria-pressed", String(recording));
-    $("rec-label").textContent = recording ? "Recording… (say “pause”)" : "Start recording";
-  }
-  function micBanner(msg) { $("micbanner").textContent = msg; $("micbanner").hidden = !msg; }
+  function micBanner(m) { $("micbanner").textContent = m; $("micbanner").hidden = !m; }
+  function setRecUI() { $("rec").setAttribute("aria-pressed", String(recording)); $("reclabel").textContent = recording ? "Recording… say “pause” to stop" : "Start recording"; }
   function startRec() {
-    if (!SR) { micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or use your keyboard’s dictation in the box below."); return; }
+    if (!SR) { micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or type / use keyboard dictation below."); return; }
     if (recording) return;
-    recording = true; setRecUI(); $("recstate").textContent = "Listening…";
+    recording = true; setRecUI(); $("state").textContent = "Listening…"; micBanner("");
     rec = new SR(); rec.lang = "en-GB"; rec.continuous = true; rec.interimResults = true;
     rec.onresult = (e) => {
       let interim = "";
@@ -383,34 +363,34 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         const r = e.results[i];
         if (r.isFinal) addFinal(r[0].transcript); else interim += r[0].transcript;
       }
-      interimText = interim.trim(); drawTranscript();
+      interimText = interim.trim(); drawAnswer();
+      // "next" said at the end of a phrase acts at once, without waiting for the pause
+      const c = command(interimText);
+      if (c && c.cmd === "next" && !c.rest) { interimText = ""; try { rec.abort(); } catch (err) {} next(); }
     };
     rec.onerror = (e) => {
-      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) { stopRec(""); micBanner("The microphone is blocked here (inside Claude it always is). Download the file and open it in Chrome or Edge, or type / use your keyboard’s dictation below."); }
+      if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) { stopRec(""); micBanner("The microphone is blocked here (inside Claude it always is). Download the file and open it in Chrome or Edge, then allow the microphone."); }
       else if (e.error === "network") { stopRec(""); micBanner("Speech recognition needs an internet connection."); }
     };
     rec.onend = () => { if (recording) { try { rec.start(); } catch (err) { stopRec(""); } } };
     try { rec.start(); } catch (e) { stopRec(""); }
   }
-  function stopRec(msg) {
+  function stopRec(m) {
     recording = false; setRecUI();
     if (rec) { rec.onend = null; try { rec.stop(); } catch (e) {} rec = null; }
-    if (interimText) { finalText = (finalText ? finalText + " " : "") + interimText; interimText = ""; drawTranscript(); }
-    $("recstate").textContent = msg || "";
+    $("state").textContent = m || "";
   }
   $("rec").addEventListener("click", () => recording ? stopRec("Paused.") : startRec());
-  $("next").addEventListener("click", () => { if (interimText) { finalText = (finalText + " " + interimText).trim(); interimText = ""; } closeItem(); });
-  $("skip").addEventListener("click", later);
+  $("next").addEventListener("click", next);
+  $("skip").addEventListener("click", skip);
   $("back").addEventListener("click", goBack);
   $("typeform").addEventListener("submit", (e) => { e.preventDefault(); const v = $("typein").value.trim(); if (!v) return; $("typein").value = ""; addFinal(v); });
-  $("copy").addEventListener("click", () => {
-    const ta = $("sumtext");
-    const ok = () => { $("copystate").textContent = "Copied. Paste it into Claude."; };
-    const fallback = () => { ta.focus(); ta.select(); $("copystate").textContent = "Selected. Press Ctrl+C (Cmd+C on Mac)."; };
-    try { navigator.clipboard.writeText(ta.value).then(ok, fallback); } catch (e) { fallback(); }
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea")) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); next(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); goBack(); }
   });
-  $("restart").addEventListener("click", () => { $("card").hidden = false; init(); });
-  if (!SR) micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or use your keyboard’s dictation in the box below.");
+  if (!SR) micBanner("This browser can’t record speech. Open the file in Chrome or Edge on a computer, or type / use keyboard dictation below.");
 
   init();
 })();

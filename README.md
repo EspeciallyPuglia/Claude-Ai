@@ -33,8 +33,8 @@ tu parli, Claude legge Omi e Plaud, apre i reparti e agisce chiedendo conferma.
 
 ## Simulatore del briefing
 
-`simulator/briefing-simulator.html`: un punto alla volta, tu rispondi a voce,
-"next" chiude il punto e riordina i task; alla fine un riepilogo da copiare in
-Claude per applicarlo in Asana e Calendar. Per registrare la voce, scarica il
-file e aprilo con Chrome o Edge sul computer, poi premi "Start recording" e
-consenti il microfono. Dentro Claude il microfono è bloccato.
+`simulator/briefing-simulator.html`: il briefing come slide, una domanda per
+slide, presa dalle conversazioni Omi. Rispondi a voce, "next" chiude il punto e
+passa al successivo; alla fine un riepilogo da copiare in Claude per creare o
+aggiornare i task in Asana. Per registrare la voce apri il file con Chrome o
+Edge sul computer, premi "Start recording" e consenti il microfono.
